@@ -343,7 +343,7 @@ if ($method == 'fetch_employee_name_js_s_dropdown') {
 		$params[] = $section_param;
 	}
 	if (!empty($line_no)) {
-		$sql = $sql . " AND line_no LIKE ?";
+		$sql = $sql . " AND (line_no LIKE ? OR line_no = 'Undefined')";
 		$line_no_param = $line_no . '%';
 		$params[] = $line_no_param;
 	}
@@ -383,7 +383,7 @@ if ($method == 'fetch_employee_name_sv_dropdown') {
 		$params[] = $section_param;
 	}
 	if (!empty($line_no)) {
-		$sql = $sql . " AND line_no LIKE ?";
+		$sql = $sql . " AND (line_no LIKE ? OR line_no = 'Undefined')";
 		$line_no_param = $line_no . '%';
 		$params[] = $line_no_param;
 	}
@@ -424,7 +424,7 @@ if ($method == 'fetch_employee_name_approver_dropdown') {
 		$params[] = $section_param;
 	}
 	if (!empty($line_no)) {
-		$sql = $sql . " AND line_no LIKE ?";
+		$sql = $sql . " AND (line_no LIKE ? OR line_no = 'Undefined')";
 		$line_no_param = $line_no . '%';
 		$params[] = $line_no_param;
 	}
