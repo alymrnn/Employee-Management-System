@@ -19,10 +19,10 @@
 
         <div class="leave-records-tabs" role="tablist" aria-label="Leave record categories">
           <button type="button" class="leave-record-tab active" data-record-tab="PENDING" role="tab" aria-selected="true">
-            <i class="far fa-clock"></i> Pending <span class="tab-count" id="pendingCount">0</span>
+            <i class="far fa-clock"></i> PENDING LEAVE FORMS <span class="tab-count" id="pendingCount">0</span>
           </button>
           <button type="button" class="leave-record-tab" data-record-tab="HISTORY" role="tab" aria-selected="false">
-            <i class="fas fa-history"></i> History <span class="tab-count" id="historyCount">0</span>
+            <i class="fas fa-history"></i> LEAVE HISTORY <span class="tab-count" id="historyCount">0</span>
           </button>
         </div>
 
@@ -56,6 +56,10 @@
               <button type="button" class="btn nexus-clear-btn" id="resetRecordFilters">
                 Reset
               </button>
+
+              <button type="button" class="btn nexus-export-btn" id="exportLeaveRecords">
+                <i class="fas fa-file-csv"></i> Export CSV
+              </button>
             </div>
           </div>
 
@@ -63,9 +67,9 @@
             class="history-status-filters"
             id="historyStatusFilters"
             aria-label="Filter history by overall status">
-            <button type="button" class="history-status-btn active" data-history-status="ALL" aria-pressed="true">All</button>
-            <button type="button" class="history-status-btn" data-history-status="APPROVED" aria-pressed="false">Approved</button>
-            <button type="button" class="history-status-btn" data-history-status="REJECTED" aria-pressed="false">Rejected</button>
+            <button type="button" class="history-status-btn active" data-history-status="ALL" aria-pressed="true">ALL</button>
+            <button type="button" class="history-status-btn" data-history-status="APPROVED" aria-pressed="false">APPROVED</button>
+            <button type="button" class="history-status-btn" data-history-status="REJECTED" aria-pressed="false">REJECTED</button>
           </div>
         </div>
 
@@ -166,13 +170,13 @@
 </div>
 
 <div class="modal fade" id="leaveRecordDetailsModal" tabindex="-1" role="dialog" aria-labelledby="leaveRecordDetailsTitle" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+  <div class="modal-dialog modal-sm modal-dialog-scrollable" role="document" style="width: 800px; max-width: 800px !important;">
     <div class="modal-content leave-details-modal">
       <div class="modal-header">
         <div>
-          <div class="leave-records-eyebrow">APPLICATION DETAILS</div>
-          <h5 class="modal-title" id="leaveRecordDetailsTitle">Leave Application</h5>
-          <div class="small text-muted" id="detailLeaveId"></div>
+          <div class="leave-records-eyebrow m-0 p-0 text-white">APPLICATION DETAILS</div>
+          <h5 class="modal-title m-0 p-0" id="leaveRecordDetailsTitle">Leave Application</h5>
+          <div class="small text-white m-0 p-0" id="detailLeaveId"></div>
         </div>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
       </div>

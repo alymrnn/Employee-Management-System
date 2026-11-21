@@ -8,35 +8,89 @@
 
     .leave-records-toolbar-main {
         display: flex;
-        align-items: end;
+        align-items: flex-end;
         flex-wrap: wrap;
         gap: 10px;
+        width: 100%;
     }
 
     .leave-records-search {
         position: relative;
-        width: min(100%, 420px);
+        flex: 1 1 260px;
+        min-width: 220px;
+        max-width: 420px;
     }
-
-    /* Keep your existing search, filter, and status-filter styles. */
 
     .leave-records-filters {
         display: flex;
-        align-items: end;
+        align-items: flex-end;
+        flex: 0 1 auto;
         flex-wrap: wrap;
-        gap: 10px;
+        gap: 8px;
     }
 
-    /* The history filter remains hidden outside the history tab. */
+    .leave-records-filters .filter-field {
+        min-width: 145px;
+    }
+
+    .leave-records-filters .filter-field label {
+        display: block;
+        margin-bottom: 5px;
+        color: #656d76;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .leave-records-filters .form-control {
+        min-width: 145px;
+        height: 36px;
+        font-size: 11px;
+    }
+
+    .leave-records-filters .btn {
+        height: 36px;
+        white-space: nowrap;
+    }
+
+    .nexus-export-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        padding: 7px 12px;
+        border: 1px solid #1f883d;
+        border-radius: 6px;
+        background: transparent;
+        color: #1f883d;
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 1.2;
+        white-space: nowrap;
+    }
+
+    .nexus-export-btn:hover,
+    .nexus-export-btn:focus {
+        border-color: #1a7f37;
+        background: #f0fdf4;
+        color: #1a7f37;
+    }
+
+    .nexus-export-btn:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+    }
+
+
     .history-status-filters {
         display: none;
         align-items: center;
+        align-self: flex-start;
         flex-wrap: nowrap;
         gap: 3px;
         width: fit-content;
         max-width: max-content;
         flex: 0 0 auto;
-        padding: 5px;
+        padding: 4px;
         border: 1px solid #e1e4e8;
         border-radius: 9px;
         background: #f6f8fa;
@@ -46,14 +100,34 @@
         display: inline-flex;
     }
 
-    @media (max-width: 700px) {
+    @media (max-width: 1100px) {
         .leave-records-toolbar-main {
+            align-items: stretch;
+        }
+
+        .leave-records-search {
+            flex: 1 1 100%;
+            max-width: none;
+        }
+    }
+
+    @media (max-width: 700px) {
+
+        .leave-records-toolbar-main,
+        .leave-records-filters {
             align-items: stretch;
             flex-direction: column;
         }
 
-        .leave-records-search {
+        .leave-records-filters,
+        .leave-records-filters .filter-field,
+        .leave-records-filters .form-control,
+        .leave-records-filters .btn {
             width: 100%;
+        }
+
+        .history-status-filters {
+            max-width: 100%;
         }
     }
 
@@ -85,7 +159,7 @@
 
     .leave-records-eyebrow {
         color: #656d76;
-        font-size: 10px;
+        font-size: 12px;
         font-weight: 700;
         letter-spacing: 0.9px;
         margin-bottom: 6px;
@@ -93,14 +167,14 @@
 
     .leave-records-heading h2 {
         color: #1f2328;
-        font-size: 20px;
+        font-size: 21px;
         font-weight: 650;
         margin: 0;
     }
 
     .leave-records-heading p {
-        color: #656d76;
-        font-size: 12.5px;
+        color: #4a5057;
+        font-size: 13px;
         margin: 6px 0 0;
     }
 
@@ -347,7 +421,7 @@
         border-radius: 5px;
         background: #fff;
         color: #1f2328;
-        font-size: 10.5px;
+        font-size: 12px;
         font-weight: 400;
         outline: 0;
     }
@@ -371,7 +445,7 @@
         border-radius: 6px;
         background: transparent;
         color: #57606a;
-        font-size: 11px;
+        font-size: 12px;
         font-weight: 500;
         line-height: 1.2;
         white-space: nowrap;
@@ -464,10 +538,11 @@
         overflow: hidden;
         border: 1px solid transparent;
         border-radius: 20px;
-        font-size: 11px;
+        font-size: 10px;
         font-weight: 650;
         text-overflow: ellipsis;
         white-space: nowrap;
+        text-transform: uppercase;
     }
 
     .status-approved {
@@ -507,9 +582,9 @@
     }
 
     .stage-approver {
-        color: #0550ae;
-        background: #eaf2ff;
-        border-color: #c5d9f8;
+        color: #033a80;
+        background: #cfe0fb;
+        border-color: #8bb5ee;
     }
 
     .status-neutral {
@@ -521,16 +596,17 @@
     .nexus-view-btn {
         padding: 3px 8px;
         border: 1px solid #2e87ee;
-        background: #fff;
+        background: transparent;
         color: #0969da;
         font-weight: normal;
     }
 
     .nexus-view-btn:hover {
-        background: #0969da;
+        background: #eef5ff;
         border-color: #0969da;
-        color: #fff;
+        color: #0969da;
     }
+
 
     .nexus-view-btn i {
         margin-right: 3px;
@@ -605,88 +681,308 @@
         color: #8c959f;
     }
 
-    .leave-details-modal {
-        border: 0;
-        border-radius: 10px;
+    .leave-records-page~#leaveRecordDetailsModal .modal-dialog {
+        width: calc(100% - 32px);
+        max-width: 1180px;
+        margin: 16px auto;
+    }
+
+    #leaveRecordDetailsModal .leave-details-modal {
+        display: flex;
+        flex-direction: column;
+        max-height: calc(100vh - 32px);
+        border: 1px solid #d0d7de;
+        border-radius: 12px;
         overflow: hidden;
+        box-shadow: 0 16px 48px rgba(31, 35, 40, .2);
     }
 
-    .leave-details-modal .modal-header {
+    #leaveRecordDetailsModal .modal-header {
+        flex: 0 0 auto;
         align-items: flex-start;
-        padding: 20px 24px;
+        gap: 16px;
+        padding: 18px 24px;
         border-bottom: 1px solid #d8dee4;
+        background: #1c6dc9;
     }
 
-    .leave-details-modal .modal-title {
-        color: #1f2328;
+    #leaveRecordDetailsModal .modal-header .close {
+        margin: 0;
+        padding: 0 4px;
+        color: #fff;
+        font-size: 27px;
+        line-height: 1;
+        opacity: .8;
+    }
+
+    #leaveRecordDetailsModal .modal-title {
+        margin: 3px 0 2px;
+        color: #fff;
         font-size: 17px;
         font-weight: 650;
+        overflow-wrap: anywhere;
     }
 
-    .leave-details-modal .modal-body {
-        padding: 20px 24px;
+    #leaveRecordDetailsModal #detailLeaveId {
+        font-size: 11px;
+    }
+
+    #leaveRecordDetailsModal .modal-body {
+        flex: 1 1 auto;
+        min-height: 0;
+        padding: 22px 24px;
+        overflow-y: auto;
+        background: #fff;
+    }
+
+    #leaveRecordDetailsModal .modal-footer {
+        flex: 0 0 auto;
+        padding: 12px 24px;
+        border-top: 1px solid #eaeef2;
+        background: #fff;
     }
 
     .record-detail-section {
-        margin-bottom: 22px;
-        padding-bottom: 18px;
-        border-bottom: 1px solid #eaeef2;
+        margin-bottom: 26px;
+        padding-bottom: 0;
+        border-bottom: 0;
     }
 
     .record-detail-section:last-child {
         margin-bottom: 0;
-        border-bottom: 0;
     }
 
-    .record-detail-section h6 {
+    .record-detail-heading {
         display: flex;
         align-items: center;
-        gap: 9px;
-        margin: 0 0 13px;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .record-detail-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 34px;
+        width: 34px;
+        height: 34px;
+        border-radius: 9px;
+        color: #0969da;
+        background: #eff6ff;
+        font-size: 14px;
+    }
+
+    .record-detail-heading-text h6 {
+        margin: 0 0 3px;
         color: #1f2328;
         font-size: 12px;
         font-weight: 700;
     }
 
-    .record-detail-section h6 i {
-        color: #0969da;
-        width: 15px;
-        text-align: center;
+    .record-detail-heading-text small {
+        display: block;
+        color: #4f555b;
+        font-size: 12px;
+        font-weight: 400;
     }
 
     .record-detail-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 12px 22px;
+        overflow: hidden;
+        border: 1px solid #d0d7de;
+        border-radius: 8px;
+        background: #fff;
     }
 
     .record-detail-field {
         min-width: 0;
+        min-height: 70px;
+        padding: 13px 18px;
+        border-right: 1px solid #eaeef2;
+        border-bottom: 1px solid #eaeef2 !important;
+    }
+
+    .record-detail-field:nth-child(2n) {
+        border-right: 0;
+    }
+
+    .record-detail-field:nth-last-child(-n + 2) {
+        border-bottom: 0;
     }
 
     .record-detail-field.field-full {
         grid-column: 1 / -1;
+        border-right: 0;
     }
 
     .record-detail-field span {
         display: block;
-        margin-bottom: 4px;
-        color: #8c959f;
-        font-size: 10px;
+        margin-bottom: 5px;
+        color: #3b3e42;
+        font-size: 12px;
     }
 
     .record-detail-field strong {
         display: block;
-        color: #1f2328;
-        font-size: 11.5px;
-        font-weight: 550;
+        color: #000000;
+        font-size: 13px;
+        font-weight: 500;
         overflow-wrap: anywhere;
         white-space: pre-wrap;
     }
 
-    .leave-details-modal .modal-footer {
-        padding: 12px 24px;
-        border-top: 1px solid #eaeef2;
+    .workflow-stage-list {
+        display: grid;
+        gap: 14px;
+    }
+
+    .workflow-stage {
+        min-width: 0;
+        padding: 14px;
+        border: 1px solid #d8dee4;
+        border-radius: 9px;
+        background: #fff;
+    }
+
+    .workflow-stage-heading,
+    .workflow-stage-title {
+        display: flex;
+        align-items: center;
+    }
+
+    .workflow-stage-heading {
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+
+    .workflow-stage-title {
+        min-width: 0;
+        gap: 10px;
+    }
+
+    .workflow-stage-title .record-detail-icon {
+        flex-basis: 32px;
+        width: 32px;
+        height: 32px;
+    }
+
+    .workflow-stage-status {
+        display: inline-flex;
+        flex: 0 0 auto;
+        align-items: center;
+        max-width: 45%;
+        padding: 5px 9px;
+        border: 1px solid transparent;
+        border-radius: 999px;
+        font-size: 10px;
+        font-weight: 700;
+        line-height: 1.3;
+        text-align: center;
+        overflow-wrap: anywhere;
+    }
+
+    .workflow-status-success {
+        color: #166534;
+        border-color: #bbf7d0;
+        background: #f0fdf4;
+    }
+
+    .workflow-status-danger {
+        color: #b42318;
+        border-color: #fecaca;
+        background: #fef2f2;
+    }
+
+    .workflow-status-pending {
+        color: #0969da;
+        border-color: #bfdbfe;
+        background: #eff6ff;
+    }
+
+    .workflow-status-neutral {
+        color: #57606a;
+        border-color: #d8dee4;
+        background: #f6f8fa;
+    }
+
+    .workflow-stage .record-detail-grid {
+        background: #fbfcfd;
+        border: none;
+    }
+
+    .record-attachment-section .record-attachment {
+        margin-top: 0;
+    }
+
+    .record-attachment {
+        width: 100%;
+        min-width: 0;
+        padding: 12px;
+        border: 1px solid #d8dee4;
+        border-radius: 8px;
+        background: #f6f8fa;
+    }
+
+    .record-attachment-preview {
+        display: block;
+        width: 100%;
+        max-height: 620px;
+        border: 0;
+        border-radius: 5px;
+        background: #fff;
+        object-fit: contain;
+    }
+
+    .record-attachment-image {
+        width: 100%;
+        max-height: 620px;
+        object-fit: contain;
+    }
+
+    .record-attachment-actions {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+    }
+
+    .record-attachment-name {
+        min-width: 0;
+        color: #57606a;
+        font-size: 11px;
+        overflow-wrap: anywhere;
+    }
+
+    .record-attachment-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 10px;
+        border: 1px solid #d0d7de;
+        border-radius: 6px;
+        background: #fff;
+        color: #0969da;
+        font-size: 11px;
+        font-weight: 600;
+        text-decoration: none !important;
+    }
+
+    .record-attachment-link:hover {
+        border-color: #0969da;
+        background: #f6f8fa;
+        color: #0550ae;
+    }
+
+    .record-attachment-empty {
+        padding: 18px;
+        border: 1px dashed #d0d7de;
+        border-radius: 7px;
+        color: #656d76;
+        font-size: 12px;
+        text-align: center;
     }
 
     @media (max-width: 767.98px) {
@@ -729,8 +1025,58 @@
             grid-template-columns: 1fr;
         }
 
+        .record-detail-field,
+        .record-detail-field:nth-child(2n),
+        .record-detail-field:nth-last-child(-n + 2) {
+            border-right: 0;
+            border-bottom: 1px solid #eaeef2;
+        }
+
+        .record-detail-field:last-child {
+            border-bottom: 0;
+        }
+
         .record-detail-field.field-full {
             grid-column: auto;
         }
+
+        .leave-records-page~#leaveRecordDetailsModal .modal-dialog {
+            width: calc(100% - 16px);
+            margin: 8px auto;
+        }
+
+        #leaveRecordDetailsModal .leave-details-modal {
+            max-height: calc(100vh - 16px);
+        }
+
+        #leaveRecordDetailsModal .modal-header,
+        #leaveRecordDetailsModal .modal-body,
+        #leaveRecordDetailsModal .modal-footer {
+            padding-right: 16px;
+            padding-left: 16px;
+        }
+
+        .workflow-stage {
+            padding: 11px;
+        }
+
+        .workflow-stage-heading {
+            align-items: flex-start;
+        }
+
+        .workflow-stage-status {
+            max-width: 42%;
+            white-space: normal;
+        }
+
+        .record-attachment-preview,
+        .record-attachment-image {
+            max-height: 55vh;
+        }
+    }
+
+    #recordSearch::-webkit-search-cancel-button {
+        -webkit-appearance: none;
+        appearance: none;
     }
 </style>

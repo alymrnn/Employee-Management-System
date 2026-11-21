@@ -161,6 +161,143 @@
             renderTable();
         }
 
+
+        function csvSafeValue(value) {
+            let text = String(value ?? '');
+            // Prevent spreadsheet formula execution for values originating in records.
+            if (/^[\s]*[=+\-@]/.test(text)) text = "'" + text;
+            return '"' + text.replace(/"/g, '""') + '"';
+        }
+
+        function exportFilteredRecords() {
+            if (!filteredRecords.length) {
+                if (window.Swal) {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'No records to export',
+                        text: 'There are no records matching the current filters.'
+                    });
+                } else {
+                    alert('There are no records matching the current filters.');
+                }
+                return;
+            }
+
+            const columns = [
+                ['Leave ID', row => row.leave_id],
+                ['Date Filed', row => row.date_created],
+                ['Employee Name', row => row.name],
+                ['Employee No.', row => row.emp_no],
+                ['Department', row => row.department],
+                ['Section', row => row.section],
+                ['Line No.', row => row.line_no],
+                ['Leave Type', row => row.leave_type],
+                ['Leave From', row => row.date_from],
+                ['Leave To', row => row.date_to],
+                ['Total Days', row => row.total_days],
+                ['Day Unit', row => row.day_unit],
+                ['Classification', row => row.classification],
+                ['Leave Reason', row => row.leave_reason],
+                ['Illness', row => row.leave_illness],
+                ['Written Reason', row => row.reason_written],
+                ['Current Stage', row => row.current_stage],
+                ['Overall Status', row => row.display_status],
+                ['FTW Evaluated By', row => row.ftw_by_name],
+                ['FTW Status', row => row.ftw_by_status],
+                ['FTW Remarks', row => row.ftw_by_remarks],
+                ['Checker', row => row.checked_by_name],
+                ['Checker Status', row => row.checked_by_status],
+                ['Checker Remarks', row => row.checked_by_remarks],
+                ['Reviewer', row => row.reviewed_by_name],
+                ['Reviewer Status', row => row.reviewed_by_status],
+                ['Reviewer Remarks', row => row.reviewed_by_remarks],
+                ['Approver', row => row.approved_by_name],
+                ['Approver Status', row => row.approved_by_status],
+                ['Approver Remarks', row => row.approved_by_remarks],
+                ['Additional Remarks', row => row.remarks]
+            ];
+
+            const csvRows = [
+                columns.map(column => csvSafeValue(column[0])).join(','),
+                ...filteredRecords.map(row => columns.map(column => csvSafeValue(column[1](row))).join(','))
+            ];
+            const csvContent = '\uFEFF' + csvRows.join('\r\n');
+            const blob = new Blob([csvContent], {
+                type: 'text/csv;charset=utf-8;'
+            });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            const now = new Date();
+            const stamp = [
+                now.getFullYear(),
+                String(now.getMonth() + 1).padStart(2, '0'),
+                String(now.getDate()).padStart(2, '0'),
+                '-',
+                String(now.getHours()).padStart(2, '0'),
+                String(now.getMinutes()).padStart(2, '0')
+            ].join('');
+
+            link.href = url;
+            link.download = `leave-records-${activeTab.toLowerCase()}-${stamp}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+
+        function attachmentUrl(value) {
+            const path = String(value || '').trim();
+            if (!path) return '';
+            if (/^(javascript|data|vbscript):/i.test(path)) return '';
+            if (path.toLowerCase().startsWith('http://') || path.toLowerCase().startsWith('https://') || path.startsWith('/')) return encodeURI(path);
+            // Stored relative paths are resolved from the current Leave Records page.
+            return encodeURI(path.split(String.fromCharCode(92)).join('/'));
+        }
+
+        function attachmentMarkup(row) {
+            const rawPath = String(row.attachment_file_path || '').trim();
+            const url = attachmentUrl(rawPath);
+            if (!rawPath || !url) {
+                return '<div class="record-attachment-empty"><i class="far fa-file"></i> No attachment available.</div>';
+            }
+
+            const cleanPath = rawPath.split(/[?#]/)[0];
+            const extension = (cleanPath.split('.').pop() || '').toLowerCase();
+            const fileType = String(row.file_type || '').toLowerCase();
+            const isImage = fileType.startsWith('image/') || ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(extension);
+            const isPdf = fileType.includes('pdf') || extension === 'pdf';
+            const fileName = cleanPath.split(/[\\\\/]/).pop() || 'View attachment';
+            const safeUrl = escapeHtml(url);
+            const safeName = escapeHtml(decodeURIComponentSafe(fileName));
+            let preview = '';
+
+            if (isImage) {
+                preview = `<img class="record-attachment-preview record-attachment-image" src="${safeUrl}" alt="${safeName}" loading="lazy">`;
+            } else if (isPdf) {
+                preview = `<iframe class="record-attachment-preview" src="${safeUrl}#toolbar=1&navpanes=0" title="${safeName}" loading="lazy"></iframe>`;
+            } else {
+                preview = '<div class="record-attachment-empty"><i class="far fa-file-alt"></i> Preview is not available for this file type. Use the button below to open it.</div>';
+            }
+
+            return `<div class="record-attachment">
+                ${preview}
+                <div class="record-attachment-actions">
+                    <span class="record-attachment-name">${safeName}</span>
+                    <a class="record-attachment-link" href="${safeUrl}" target="_blank" rel="noopener noreferrer">
+                        <i class="fas fa-external-link-alt"></i> Open attachment
+                    </a>
+                </div>
+            </div>`;
+        }
+
+        function decodeURIComponentSafe(value) {
+            try {
+                return decodeURIComponent(value);
+            } catch (error) {
+                return value;
+            }
+        }
+
         function renderTable() {
             const pageSize = Number($('#recordPageSize').val()) || 25;
             const total = filteredRecords.length;
@@ -212,18 +349,59 @@
             container.html(html);
         }
 
-        function detailSection(title, icon, fields) {
-            return `<section class="record-detail-section"><h6><i class="${icon}"></i>${escapeHtml(title)}</h6><div class="record-detail-grid">${fields.map(field => `
-            <div class="record-detail-field ${field.full ? 'field-full' : ''}">
-                <span>${escapeHtml(field.label)}</span><strong>${escapeHtml(field.value || '—')}</strong>
-            </div>`).join('')}</div></section>`;
+        function detailSection(title, icon, subtitle, fields) {
+            return `<section class="record-detail-section">
+                <div class="record-detail-heading">
+                    <span class="record-detail-icon"><i class="${icon}"></i></span>
+                    <span class="record-detail-heading-text">
+                        <h6>${escapeHtml(title)}</h6>
+                        <small>${escapeHtml(subtitle || '')}</small>
+                    </span>
+                </div>
+                <div class="record-detail-grid">${fields.map(field => `
+                    <div class="record-detail-field ${field.full ? 'field-full' : ''}">
+                        <span>${escapeHtml(field.label)}</span>
+                        <strong>${escapeHtml(field.value || '—')}</strong>
+                    </div>`).join('')}
+                </div>
+            </section>`;
+        }
+
+        function workflowStageSection(title, icon, status, fields) {
+            const statusText = String(status || 'Not available');
+            const statusClass = /approved|completed|fit to work|passed/i.test(statusText) ?
+                'workflow-status-success' :
+                /rejected|not fit|declined/i.test(statusText) ?
+                'workflow-status-danger' :
+                /pending|awaiting|for approval/i.test(statusText) ?
+                'workflow-status-pending' :
+                'workflow-status-neutral';
+
+            return `<section class="workflow-stage">
+                <div class="workflow-stage-heading">
+                    <div class="workflow-stage-title">
+                        <span class="record-detail-icon"><i class="${icon}"></i></span>
+                        <div class="record-detail-heading-text">
+                            <h6>${escapeHtml(title)}</h6>
+                            <small>${escapeHtml(title === 'Clinic Evaluation' ? 'Fitness-to-work evaluation' : `${title} review and decision`)}</small>
+                        </div>
+                    </div>
+                    <span class="workflow-stage-status ${statusClass}">${escapeHtml(statusText)}</span>
+                </div>
+                <div class="record-detail-grid">${fields.map(field => `
+                    <div class="record-detail-field ${field.full ? 'field-full' : ''}">
+                        <span>${escapeHtml(field.label)}</span>
+                        <strong>${escapeHtml(field.value || '—')}</strong>
+                    </div>`).join('')}
+                </div>
+            </section>`;
         }
 
         function showDetails(row) {
             $('#detailLeaveId').text(row.leave_id || '');
             $('#leaveRecordDetailsTitle').text(row.name ? row.name + ' — Leave Application' : 'Leave Application');
 
-            const employee = detailSection('Employee Information', 'fas fa-user', [{
+            const employee = detailSection('EMPLOYEE INFORMATION', 'fas fa-user', 'Personal and employment details', [{
                     label: 'Employee Name',
                     value: row.name
                 }, {
@@ -249,11 +427,10 @@
                     value: row.contact_no
                 }, {
                     label: 'Address',
-                    value: row.address,
-                    full: true
+                    value: row.address
                 }
             ]);
-            const leave = detailSection('Leave Information', 'fas fa-file-alt', [{
+            const leave = detailSection('LEAVE INFORMATION', 'fas fa-file-alt', 'Application details and reason for leave', [{
                     label: 'Leave Type',
                     value: row.leave_type
                 }, {
@@ -296,90 +473,87 @@
                     value: row.information_received_by
                 }
             ]);
-            const workflow = detailSection('Approval Workflow', 'fas fa-route', [{
-                    label: 'FTW Status',
-                    value: row.ftw_by_status
-                }, {
-                    label: 'FTW Evaluated By',
-                    value: row.ftw_by_name
-                },
-                {
-                    label: 'FTW Remarks',
-                    value: row.ftw_by_remarks,
-                    full: true
-                }, {
-                    label: 'FTW Date',
-                    value: row.ftw_by_date ? formatDate(row.ftw_by_date) : ''
-                },
-                {
-                    label: 'Checker',
-                    value: row.checked_by_name
-                }, {
-                    label: 'Checker Status',
-                    value: row.checked_by_status
-                },
-                {
-                    label: 'Checker Remarks',
-                    value: row.checked_by_remarks,
-                    full: true
-                }, {
-                    label: 'Checker Date',
-                    value: row.checked_by_date ? formatDate(row.checked_by_date) : ''
-                },
-                {
-                    label: 'Reviewer',
-                    value: row.reviewed_by_name
-                }, {
-                    label: 'Reviewer Status',
-                    value: row.reviewed_by_status
-                },
-                {
-                    label: 'Reviewer Remarks',
-                    value: row.reviewed_by_remarks,
-                    full: true
-                }, {
-                    label: 'Reviewer Date',
-                    value: row.reviewed_by_date ? formatDate(row.reviewed_by_date) : ''
-                },
-                {
-                    label: 'Approver',
-                    value: row.approved_by_name
-                }, {
-                    label: 'Approver Status',
-                    value: row.approved_by_status
-                },
-                {
-                    label: 'Approver Remarks',
-                    value: row.approved_by_remarks,
-                    full: true
-                }, {
-                    label: 'Approver Date',
-                    value: row.approved_by_date ? formatDate(row.approved_by_date) : ''
-                },
-                {
-                    label: 'Overall Status',
-                    value: row.display_status
-                }, {
-                    label: 'Current Stage',
-                    value: row.current_stage
-                }
-            ]);
-            const extra = detailSection('Additional Information', 'fas fa-paperclip', [{
-                    label: 'Remarks',
-                    value: row.remarks,
-                    full: true
-                },
-                {
-                    label: 'Attachment',
-                    value: row.attachment_file_path ? 'Attachment available' : 'No attachment'
-                },
-                {
-                    label: 'File Type',
-                    value: row.file_type
-                }
-            ]);
+            const workflow = `<section class="record-detail-section record-workflow-section">
+                <div class="record-detail-heading">
+                    <span class="record-detail-icon"><i class="fas fa-route"></i></span>
+                    <span class="record-detail-heading-text">
+                        <h6>APPROVAL WORKFLOW</h6>
+                        <small>Individual evaluation, checking, reviewing, and approval records</small>
+                    </span>
+                </div>
+                <div class="workflow-stage-list">
+                    ${workflowStageSection('CLINIC EVALUATION', 'fas fa-stethoscope', row.ftw_by_status, [{
+                        label: 'Evaluated By',
+                        value: row.ftw_by_name
+                    }, {
+                        label: 'Evaluation Date',
+                        value: row.ftw_by_date ? formatDate(row.ftw_by_date) : ''
+                    }, {
+                        label: 'Clinic Remarks',
+                        value: row.ftw_by_remarks,
+                        full: true
+                    }])}
+                    ${workflowStageSection('CHECKER', 'fas fa-clipboard-check', row.checked_by_status, [{
+                        label: 'Checked By',
+                        value: row.checked_by_name
+                    }, {
+                        label: 'Checking Date',
+                        value: row.checked_by_date ? formatDate(row.checked_by_date) : ''
+                    }, {
+                        label: 'Checker Remarks',
+                        value: row.checked_by_remarks,
+                        full: true
+                    }])}
+                    ${workflowStageSection('REVIEWER', 'fas fa-file-signature', row.reviewed_by_status, [{
+                        label: 'Reviewed By',
+                        value: row.reviewed_by_name
+                    }, {
+                        label: 'Review Date',
+                        value: row.reviewed_by_date ? formatDate(row.reviewed_by_date) : ''
+                    }, {
+                        label: 'Reviewer Remarks',
+                        value: row.reviewed_by_remarks,
+                        full: true
+                    }])}
+                    ${workflowStageSection('APPROVER', 'fas fa-shield-alt', row.approved_by_status, [{
+                        label: 'Approved By',
+                        value: row.approved_by_name
+                    }, {
+                        label: 'Approval Date',
+                        value: row.approved_by_date ? formatDate(row.approved_by_date) : ''
+                    }, {
+                        label: 'Approver Remarks',
+                        value: row.approved_by_remarks,
+                        full: true
+                    }])}
+                </div>
+            </section>`;
+            const extra = detailSection('ADDITIONAL INFORMATION', 'fas fa-info-circle', 'Current record status and other application details', [{
+                label: 'Current Stage',
+                value: row.current_stage
+            }, {
+                label: 'Overall Status',
+                value: row.display_status
+            }, {
+                label: 'Remarks',
+                value: row.remarks,
+                full: true
+            }, {
+                label: 'File Type',
+                value: row.file_type
+            }]);
+            const attachment = `<section class="record-detail-section record-attachment-section">
+                <div class="record-detail-heading">
+                    <span class="record-detail-icon"><i class="fas fa-paperclip"></i></span>
+                    <span class="record-detail-heading-text">
+                        <h6>ATTACHMENT</h6>
+                        <small>Uploaded supporting document for this leave application</small>
+                    </span>
+                </div>
+                ${attachmentMarkup(row)}
+            </section>`;
 
-            $('#leaveRecordDetailsContent').html(employee + leave + workflow + extra);
+            $('#leaveRecordDetailsContent').html(employee + leave + workflow + extra + attachment);
             $('#leaveRecordDetailsModal').modal('show');
         }
 
@@ -420,6 +594,7 @@
             $('.record-header-filter').val('');
             applyFilters();
         });
+        $('#exportLeaveRecords').on('click', exportFilteredRecords);
         $('#recordPagination').on('click', 'button[data-page]', function() {
             if (this.disabled) return;
             currentPage = Number($(this).data('page'));
