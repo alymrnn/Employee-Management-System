@@ -8,6 +8,7 @@
         let filteredRecords = [];
         let currentPage = 1;
         let requestVersion = 0;
+        let historyStatusFilter = 'ALL';
 
         const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({
             '&': '&amp;',
@@ -44,6 +45,25 @@
 
         const renderStatus = value => `<span class="record-status ${statusClass(value)}">${escapeHtml(value || '—')}</span>`;
 
+        const stageClass = value => {
+            const stage = String(value || '').toLowerCase();
+            if (stage.includes('clinic') || stage.includes('ftw') || stage.includes('fit to work')) return 'stage-clinic';
+            if (stage.includes('checker')) return 'stage-checker';
+            if (stage.includes('reviewer')) return 'stage-reviewer';
+            if (stage.includes('approver') || stage.includes('approval')) return 'stage-approver';
+            return 'status-neutral';
+        };
+
+        const renderStage = value => `<span class="record-status ${stageClass(value)}">${escapeHtml(value || '—')}</span>`;
+
+        const statusGroup = value => {
+            const status = String(value || '').toLowerCase();
+            if (status.includes('approved') && !status.includes('awaiting')) return 'APPROVED';
+            if (status.includes('reject') || status.includes('disapproved') || status.includes('not fit')) return 'REJECTED';
+            if (status.includes('pending') || status.includes('awaiting')) return 'PENDING';
+            return 'PENDING';
+        };
+
         function loadRecords() {
             const version = ++requestVersion;
             $('#leaveRecordsBody').html('<tr><td colspan="11" class="table-state"><span class="spinner-border spinner-border-sm mr-2"></span>Loading records...</td></tr>');
@@ -68,7 +88,8 @@
                     allRecords = Array.isArray(response.data) ? response.data : [];
                     $('#pendingCount').text(response.counts?.pending ?? (activeTab === 'PENDING' ? allRecords.length : '—'));
                     $('#historyCount').text(response.counts?.history ?? (activeTab === 'HISTORY' ? allRecords.length : '—'));
-                    populateLeaveTypes();
+                    updateHistoryStatusCounts();
+                    $('#historyStatusFilters').toggleClass('is-visible', activeTab === 'HISTORY');
                     applyFilters();
                 },
                 error: function(xhr) {
@@ -85,30 +106,54 @@
             $('#recordResultCount').text('Records could not be loaded');
         }
 
-        function populateLeaveTypes() {
-            const select = $('#recordLeaveType');
-            const selected = select.val();
-            const values = [...new Set(allRecords.map(row => row.leave_type).filter(Boolean))].sort((a, b) => a.localeCompare(b));
-            select.html('<option value="">All leave types</option>' + values.map(value => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`).join(''));
-            if (values.includes(selected)) select.val(selected);
+        function updateHistoryStatusCounts() {
+            const counts = allRecords.reduce((result, row) => {
+                result[statusGroup(row.display_status)]++;
+                return result;
+            }, {
+                PENDING: 0,
+                APPROVED: 0,
+                REJECTED: 0
+            });
+            $('#historyAllCount').text(allRecords.length);
+            $('#historyPendingCount').text(counts.PENDING);
+            $('#historyApprovedCount').text(counts.APPROVED);
+            $('#historyRejectedCount').text(counts.REJECTED);
         }
 
         function applyFilters() {
             const query = $('#recordSearch').val().trim().toLowerCase();
-            const leaveType = $('#recordLeaveType').val();
             const dateFrom = $('#recordDateFrom').val();
             const dateTo = $('#recordDateTo').val();
+            const headerDate = $('#headerDateFiled').val();
+            const employee = $('#headerEmployee').val().trim().toLowerCase();
+            const department = $('#headerDepartment').val().trim().toLowerCase();
+            const lineNo = $('#headerLineNo').val().trim().toLowerCase();
+            const leaveType = $('#headerLeaveType').val().trim().toLowerCase();
+            const currentStage = $('#headerCurrentStage').val();
+            const overallStatus = $('#headerOverallStatus').val();
 
             filteredRecords = allRecords.filter(row => {
+                const filed = row.date_created ? String(row.date_created).substring(0, 10) : '';
                 const searchable = [
-                    row.leave_id, row.name, row.emp_no, row.department, row.section, row.line_no,
+                    row.name, row.emp_no, row.department, row.section, row.line_no,
                     row.leave_type, row.leave_reason, row.leave_status, row.current_stage
                 ].join(' ').toLowerCase();
+                const employeeValue = [row.name, row.emp_no].join(' ').toLowerCase();
+                const departmentValue = [row.department, row.section].join(' ').toLowerCase();
+                const group = statusGroup(row.display_status);
+
                 if (query && !searchable.includes(query)) return false;
-                if (leaveType && row.leave_type !== leaveType) return false;
-                const filed = row.date_created ? String(row.date_created).substring(0, 10) : '';
                 if (dateFrom && (!filed || filed < dateFrom)) return false;
                 if (dateTo && (!filed || filed > dateTo)) return false;
+                if (headerDate && filed !== headerDate) return false;
+                if (employee && !employeeValue.includes(employee)) return false;
+                if (department && !departmentValue.includes(department)) return false;
+                if (lineNo && !String(row.line_no || '').toLowerCase().includes(lineNo)) return false;
+                if (leaveType && !String(row.leave_type || '').toLowerCase().includes(leaveType)) return false;
+                if (currentStage && row.current_stage !== currentStage) return false;
+                if (overallStatus && group !== overallStatus) return false;
+                if (activeTab === 'HISTORY' && historyStatusFilter !== 'ALL' && group !== historyStatusFilter) return false;
                 return true;
             });
 
@@ -133,14 +178,13 @@
                 <tr>
                     <td class="text-muted">${start + index + 1}</td>
                     <td>${escapeHtml(formatDate(row.date_created))}</td>
-                    <td><span class="record-id">${escapeHtml(row.leave_id || '—')}</span></td>
                     <td><div class="employee-name">${escapeHtml(row.name || '—')}</div><div class="employee-sub">${escapeHtml(row.emp_no || '')}</div></td>
                     <td><div>${escapeHtml(row.department || '—')}</div><div class="employee-sub">${escapeHtml(row.section || '')}</div></td>
                     <td>${escapeHtml(row.line_no)}</td>
                     <td>${escapeHtml(row.leave_type || '—')}</td>
                     <td>${escapeHtml(formatDateRange(row))}</td>
                     <td>${escapeHtml(row.total_days ?? '—')} ${escapeHtml(row.day_unit || '')}</td>
-                    <td>${renderStatus(row.current_stage)}</td>
+                    <td>${renderStage(row.current_stage)}</td>
                     <td>${renderStatus(row.display_status)}</td>
                     <td><button type="button" class="btn btn-sm nexus-view-btn" data-record-index="${start + index}"><i class="far fa-eye"></i> View</button></td>
                 </tr>
@@ -343,8 +387,12 @@
             const nextTab = $(this).data('record-tab');
             if (activeTab === nextTab) return;
             activeTab = nextTab;
+            historyStatusFilter = 'ALL';
             $('[data-record-tab]').removeClass('active').attr('aria-selected', 'false');
             $(this).addClass('active').attr('aria-selected', 'true');
+            $('[data-history-status]').removeClass('active');
+            $('[data-history-status="ALL"]').addClass('active');
+            $('#historyStatusFilters').toggleClass('is-visible', activeTab === 'HISTORY');
             loadRecords();
         });
 
@@ -357,13 +405,19 @@
         $('#clearRecordSearch').on('click', function() {
             $('#recordSearch').val('').trigger('input').focus();
         });
-        $('#recordLeaveType').on('change', applyFilters);
+        $('.record-header-filter').on('input change', applyFilters);
+        $(document).on('click', '[data-history-status]', function() {
+            historyStatusFilter = String($(this).data('history-status') || 'ALL');
+            $('[data-history-status]').removeClass('active');
+            $(this).addClass('active');
+            applyFilters();
+        });
         $('#recordPageSize').on('change', renderTable);
         $('#resetRecordFilters').on('click', function() {
             $('#recordSearch').val('');
             $('#clearRecordSearch').prop('hidden', true);
-            $('#recordLeaveType').val('');
             $('#recordDateFrom, #recordDateTo').val('');
+            $('.record-header-filter').val('');
             applyFilters();
         });
         $('#recordPagination').on('click', 'button[data-page]', function() {

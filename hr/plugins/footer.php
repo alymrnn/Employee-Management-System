@@ -1,4 +1,4 @@
- <footer class="main-footer">
+ <footer class="main-footer text-xs">
     <strong>Copyright &copy; 2023. Developed by: Vince Dale Alcantara</strong>
     All rights reserved.
     <div class="float-right d-none d-sm-inline-block">
