@@ -97,7 +97,23 @@
                 <th><input type="search" class="record-header-filter" id="headerEmployee" placeholder="Employee" aria-label="Filter by employee"></th>
                 <th><input type="search" class="record-header-filter" id="headerDepartment" placeholder="Department / Section" aria-label="Filter by department or section"></th>
                 <th><input type="search" class="record-header-filter" id="headerLineNo" placeholder="Line No." aria-label="Filter by line number"></th>
-                <th><input type="search" class="record-header-filter" id="headerLeaveType" placeholder="Leave Type" aria-label="Filter by leave type"></th>
+                <th>
+                  <select class="record-header-filter" id="headerLeaveType" aria-label="Filter by leave type">
+                    <option value="">All leave type</option>
+                    <option value="BEREAVEMENT lEAVE">Bereavement Leave</option>
+                    <option value="COMPENSATORY OFF/LEAVE">Compensatory Off/Leave</option>
+                    <option value="EMERGENCY LEAVE">Emergency Leave</option>
+                    <option value="MATERNITY LEAVE">Maternity Leave</option>
+                    <option value="NO WORK (COMPANY INITIATED)">No Work (Company Initiated)</option>
+                    <option value="PATERNITY LEAVE">Paternity Leave</option>
+                    <option value="SICK LEAVE">Sick Leave</option>
+                    <option value="SOLO PARENT LEAVE">Solo Parent Leave</option>
+                    <option value="UNPAID LEAVE">Unpaid Leave</option>
+                    <option value="VACATION LEAVE">Vacation Leave</option>
+                    <option value="LOYALTY LEAVE">Loyalty Leave</option>
+                    <option value="BIRTHDAY LEAVE">Birthday Leave</option>
+                  </select>
+                </th>
                 <th></th>
                 <th></th>
                 <th>

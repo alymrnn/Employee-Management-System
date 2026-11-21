@@ -38,6 +38,7 @@ if (!isset($_SESSION['emp_no_hr'])) {
 
     body {
       font-family: "Mona Sans", sans-serif;
+      user-select: none;
     }
 
 

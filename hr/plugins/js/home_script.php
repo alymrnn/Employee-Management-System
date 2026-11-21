@@ -129,7 +129,7 @@
             const employee = $('#headerEmployee').val().trim().toLowerCase();
             const department = $('#headerDepartment').val().trim().toLowerCase();
             const lineNo = $('#headerLineNo').val().trim().toLowerCase();
-            const leaveType = $('#headerLeaveType').val().trim().toLowerCase();
+            const leaveType = $('#headerLeaveType').val();
             const currentStage = $('#headerCurrentStage').val();
             const overallStatus = $('#headerOverallStatus').val();
 
@@ -150,7 +150,7 @@
                 if (employee && !employeeValue.includes(employee)) return false;
                 if (department && !departmentValue.includes(department)) return false;
                 if (lineNo && !String(row.line_no || '').toLowerCase().includes(lineNo)) return false;
-                if (leaveType && !String(row.leave_type || '').toLowerCase().includes(leaveType)) return false;
+                if (leaveType && row.leave_type !== leaveType) return false;
                 if (currentStage && row.current_stage !== currentStage) return false;
                 if (overallStatus && group !== overallStatus) return false;
                 if (activeTab === 'HISTORY' && historyStatusFilter !== 'ALL' && group !== historyStatusFilter) return false;
