@@ -1,389 +1,382 @@
-<script type="text/javascript">
-// DOMContentLoaded function
-document.addEventListener("DOMContentLoaded", () => {
-    get_pending_leave_forms();
-});
+<script>
+    (function($) {
+        'use strict';
 
-const get_pending_leave_forms =()=>{
-    let leave_date = document.getElementById("pending_leave_date_search").value;
-    let leave_type = document.getElementById("pending_leave_type_search").value;
+        const endpoint = '../process/hr/leave/laf_p.php';
+        let activeTab = 'PENDING';
+        let allRecords = [];
+        let filteredRecords = [];
+        let currentPage = 1;
+        let requestVersion = 0;
 
-    if (leave_date != '') {
-        $.ajax({
-            url:'../process/hr/leave/laf_p.php',
-            type:'POST',
-            cache:false,
-            data:{
-                method:'get_pending_leave_forms',
-                leave_date: leave_date,
-                leave_type: leave_type
-            },
-            success:function(response){
-                $('#pendingLeaveFormsData').html(response);
-                let table_rows = parseInt(document.getElementById("pendingLeaveFormsData").childNodes.length);
-                $('#count_view').html("Count: " + table_rows);
-            }
-        });
-    } else {
-        Swal.fire({
-          icon: 'info',
-          title: 'Please fill out date fields',
-          text: 'Info',
-          showConfirmButton: false,
-          timer : 1000
-        });
-    }
-}
+        const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        } [char]));
 
-const get_pending_leave_forms_details = param => {
-    var string = param.split('~!~');
-    var leave_form_id = string[0];
-    var emp_no = string[1];
-    var date_filed = string[2];
-    var address = string[3];
-    var contact_no = string[4];
-    var leave_type = string[5];
-    var leave_date_from = string[6];
-    var leave_date_to = string[7];
-    var total_leave_days = string[8];
-    var irt_phone_call = string[9];
-    var irt_letter = string[10];
-    var irb = string[11];
-    var reason = string[12];
+        const formatDate = value => {
+            if (!value) return '—';
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return String(value);
+            return date.toLocaleDateString('en-PH', {
+                year: 'numeric',
+                month: 'short',
+                day: '2-digit'
+            });
+        };
 
-    var issued_by = string[13];
-    var js_s = string[14];
-    var sv = string[15];
-    var approver = string[16];
+        const formatDateRange = row => {
+            const from = formatDate(row.date_from);
+            const to = formatDate(row.date_to);
+            return from === to ? from : from + ' – ' + to;
+        };
 
-    var sl_r1_1_hrs = string[17];
-    var sl_r1_1_date = string[18];
-    var sl_r1_1_time_in = string[19];
-    var sl_r1_1_time_out = string[20];
-    var sl_r1_2_days = string[21];
-    var sl_r1_3_date = string[22];
+        const statusClass = value => {
+            const status = String(value || '').toLowerCase();
+            if (status.includes('approved') && !status.includes('awaiting')) return 'status-approved';
+            if (status.includes('reject') || status.includes('disapproved') || status.includes('not fit')) return 'status-rejected';
+            if (status.includes('awaiting') || status.includes('pending')) return 'status-pending';
+            return 'status-neutral';
+        };
 
-    var sl_rc_1_days = string[23];
-    var sl_rc_2_from = string[24];
-    var sl_rc_2_to = string[25];
-    var sl_rc_3_oc = string[26];
-    var sl_rc_4_hm = string[27];
-    var sl_rc_mgh = string[28];
+        const renderStatus = value => `<span class="record-status ${statusClass(value)}">${escapeHtml(value || '—')}</span>`;
 
-    var sl_r2 = string[29];
+        function loadRecords() {
+            const version = ++requestVersion;
+            $('#leaveRecordsBody').html('<tr><td colspan="11" class="table-state"><span class="spinner-border spinner-border-sm mr-2"></span>Loading records...</td></tr>');
+            $('#recordResultCount').text('Loading records...');
 
-    var sl_dr_name = string[30];
-    var sl_dr_date = string[31];
+            $.ajax({
+                url: endpoint,
+                type: 'POST',
+                dataType: 'json',
+                cache: false,
+                data: {
+                    method: 'get_leave_records',
+                    category: activeTab
+                },
+                success: function(response) {
+                    if (version !== requestVersion) return;
+                    if (!response || response.success !== true) {
+                        showLoadError(response && response.message ? response.message : 'Unable to retrieve leave records.');
+                        return;
+                    }
 
-    document.getElementById('leave_form_id_leave_pending').innerHTML = leave_form_id;
-    document.getElementById('emp_no_leave_pending').innerHTML = emp_no;
-    document.getElementById('date_filed_leave_pending').innerHTML = date_filed;
-    document.getElementById('address_leave_pending').innerHTML = address;
-    document.getElementById('contact_no_leave_pending').innerHTML = contact_no;
-    document.getElementById('leave_type_leave_pending').innerHTML = leave_type;
-    document.getElementById('leave_date_from_leave_pending').innerHTML = leave_date_from;
-    document.getElementById('leave_date_to_leave_pending').innerHTML = leave_date_to;
-    document.getElementById('total_leave_days_leave_pending').innerHTML = total_leave_days;
-    if (irt_phone_call == 1) {
-        document.getElementById('irt_leave_pending').innerHTML = 'Phone Call';
-    } else if (irt_letter == 1) {
-        document.getElementById('irt_leave_pending').innerHTML = 'Letter';
-    }
-    document.getElementById('irb_leave_pending').innerHTML = irb;
-    document.getElementById('reason_leave_pending').innerHTML = reason;
-
-    document.getElementById('issued_by_leave_pending').innerHTML = issued_by;
-    document.getElementById('js_s_leave_pending').innerHTML = js_s;
-    document.getElementById('sv_leave_pending').innerHTML = sv;
-    document.getElementById('approver_leave_pending').innerHTML = approver;
-
-    if (sl_r1_1_hrs > 0 || sl_r1_1_date != '' || sl_r1_1_time_in != '' || sl_r1_1_time_out != '') {
-        document.getElementById('lbl_sl_r1_1_hrs_leave_pending').innerHTML = `<i class="fas fa-check-square mr-2"></i>Undertime (No. of Hours) `;
-        document.getElementById('sl_r1_1_hrs_leave_pending').innerHTML = sl_r1_1_hrs;
-    }
-    document.getElementById('sl_r1_1_date_leave_pending').innerHTML = sl_r1_1_date;
-    if (sl_rc_1_days > 0 || sl_rc_2_from != '' || sl_rc_2_to != '') {
-        document.getElementById('lbl_sl_rc_1_days_leave_pending').innerHTML = `<i class="fas fa-check-square mr-2"></i>Unfit for `;
-        document.getElementById('sl_rc_1_days_leave_pending').innerHTML = sl_rc_1_days;
-    }
-
-    document.getElementById('sl_r1_1_time_in_leave_pending').innerHTML = sl_r1_1_time_in;
-    document.getElementById('sl_r1_1_time_out_leave_pending').innerHTML = sl_r1_1_time_out;
-    
-    document.getElementById('sl_rc_2_from_leave_pending').innerHTML = sl_rc_2_from;
-    document.getElementById('sl_rc_2_to_leave_pending').innerHTML = sl_rc_2_to;
-
-    if (sl_r1_2_days > 0) {
-        document.getElementById('lbl_sl_r1_2_days_leave_pending').innerHTML = `<i class="fas fa-check-square mr-2"></i>Sick Leave For : `;
-        document.getElementById('sl_r1_2_days_leave_pending').innerHTML = sl_r1_2_days;
-    }
-
-    if (sl_rc_3_oc == 1) {
-        document.getElementById('sl_rc_3_oc_leave_pending').innerHTML = `<i class="fas fa-check-square mr-2"></i>For Observation At The Clinic`;
-    }
-
-    if (sl_r1_3_date != '') {
-        document.getElementById('lbl_sl_r1_3_date_leave_pending').innerHTML = `<i class="fas fa-check-square mr-2"></i>Fit To Work Effective `;
-        document.getElementById('sl_r1_3_date_leave_pending').innerHTML = sl_r1_3_date;
-    }
-
-    if (sl_rc_4_hm == 1) {
-        document.getElementById('lbl_sl_rc_4_hm_leave_pending').innerHTML = `<i class="fas fa-check-square mr-2"></i>For Hospital Management`;
-    }
-
-    if (sl_rc_mgh == 1) {
-        document.getElementById('lbl_sl_rc_mgh_leave_pending').innerHTML = `<i class="fas fa-check-square mr-2"></i>May Go Home`;
-    }
-
-    document.getElementById('sl_r2_leave_pending').innerHTML = sl_r2;
-
-    document.getElementById('sl_dr_name_leave_pending').innerHTML = sl_dr_name;
-    document.getElementById('sl_dr_date_leave_pending').innerHTML = sl_dr_date;
-
-    $.ajax({
-        url:'../process/hr/employees/emp-masterlist_p.php',
-        type:'POST',
-        cache:false,
-        data:{
-            method:'get_employee_data',
-            emp_no:emp_no
-        },
-        success:function(response){
-            try {
-                let response_array = JSON.parse(response);
-                document.getElementById('emp_no_leave_pending').innerHTML = response_array.emp_no;
-                document.getElementById('full_name_leave_pending').innerHTML = response_array.full_name;
-                document.getElementById('dept_leave_pending').innerHTML = response_array.dept;
-                document.getElementById('position_leave_pending').innerHTML = response_array.position;
-                document.getElementById('emp_status_leave_pending').innerHTML = response_array.emp_status;
-                document.getElementById('date_hired_leave_pending').innerHTML = response_array.date_hired;
-                document.getElementById('address_leave_pending').value = response_array.address;
-                document.getElementById('contact_no_leave_pending').innerHTML = response_array.contact_no;
-            } catch(e) {
-                console.log(response);
-                Swal.fire({
-                  icon: 'error',
-                  title: 'Error !!!',
-                  text: `Error: ${response}`,
-                  showConfirmButton: false,
-                  timer : 1000
-                });
-            }
+                    allRecords = Array.isArray(response.data) ? response.data : [];
+                    $('#pendingCount').text(response.counts?.pending ?? (activeTab === 'PENDING' ? allRecords.length : '—'));
+                    $('#historyCount').text(response.counts?.history ?? (activeTab === 'HISTORY' ? allRecords.length : '—'));
+                    populateLeaveTypes();
+                    applyFilters();
+                },
+                error: function(xhr) {
+                    if (version !== requestVersion) return;
+                    let message = 'Unable to retrieve leave records. Please try again.';
+                    if (xhr.responseJSON?.message) message = xhr.responseJSON.message;
+                    showLoadError(message);
+                }
+            });
         }
-    });
-}
 
-const get_leave_forms_history =()=>{
-    let date_filed_from = document.getElementById("date_filed_from_search").value;
-    let date_filed_to = document.getElementById("date_filed_to_search").value;
-    let leave_type = document.getElementById("leave_type_search").value;
-    let leave_form_status = document.getElementById("leave_form_status_search").value;
-    if (date_filed_from != '' && date_filed_to != '') {
-        $.ajax({
-            url:'../process/hr/leave/laf_p.php',
-            type:'POST',
-            cache:false,
-            data:{
-                method:'get_leave_forms_history',
-                date_filed_from:date_filed_from,
-                date_filed_to:date_filed_to,
-                leave_type:leave_type,
-                leave_form_status:leave_form_status
-            },
-            success:function(response){
-                $('#leaveFormsHistoryData').html(response);
-                let table_rows = parseInt(document.getElementById("leaveFormsHistoryData").childNodes.length);
-                $('#count_view3').html("Count: " + table_rows);
-            }
-        });
-    } else {
-        Swal.fire({
-          icon: 'info',
-          title: 'Please fill out date fields',
-          text: 'Info',
-          showConfirmButton: false,
-          timer : 1000
-        });
-    }
-}
-
-const get_leave_forms_history_details = param => {
-    var string = param.split('~!~');
-    var leave_form_id = string[0];
-    var emp_no = string[1];
-    var date_filed = string[2];
-    var address = string[3];
-    var contact_no = string[4];
-    var leave_type = string[5];
-    var leave_date_from = string[6];
-    var leave_date_to = string[7];
-    var total_leave_days = string[8];
-    var irt_phone_call = string[9];
-    var irt_letter = string[10];
-    var irb = string[11];
-    var reason = string[12];
-
-    var issued_by = string[13];
-    var js_s = string[14];
-    var sv = string[15];
-    var approver = string[16];
-
-    var sl_r1_1_hrs = string[17];
-    var sl_r1_1_date = string[18];
-    var sl_r1_1_time_in = string[19];
-    var sl_r1_1_time_out = string[20];
-    var sl_r1_2_days = string[21];
-    var sl_r1_3_date = string[22];
-
-    var sl_rc_1_days = string[23];
-    var sl_rc_2_from = string[24];
-    var sl_rc_2_to = string[25];
-    var sl_rc_3_oc = string[26];
-    var sl_rc_4_hm = string[27];
-    var sl_rc_mgh = string[28];
-
-    var sl_r2 = string[29];
-
-    var sl_dr_name = string[30];
-    var sl_dr_date = string[31];
-
-    var leave_form_status = string[32];
-
-    document.getElementById('leave_form_id_leave_history').innerHTML = leave_form_id;
-    document.getElementById('emp_no_leave_history').innerHTML = emp_no;
-    document.getElementById('date_filed_leave_history').innerHTML = date_filed;
-    document.getElementById('address_leave_history').innerHTML = address;
-    document.getElementById('contact_no_leave_history').innerHTML = contact_no;
-    document.getElementById('leave_type_leave_history').innerHTML = leave_type;
-    document.getElementById('leave_date_from_leave_history').innerHTML = leave_date_from;
-    document.getElementById('leave_date_to_leave_history').innerHTML = leave_date_to;
-    document.getElementById('total_leave_days_leave_history').innerHTML = total_leave_days;
-    if (irt_phone_call == 1) {
-        document.getElementById('irt_leave_history').innerHTML = 'Phone Call';
-    } else if (irt_letter == 1) {
-        document.getElementById('irt_leave_history').innerHTML = 'Letter';
-    }
-    document.getElementById('irb_leave_history').innerHTML = irb;
-    document.getElementById('reason_leave_history').innerHTML = reason;
-
-    document.getElementById('issued_by_leave_history').innerHTML = issued_by;
-    document.getElementById('js_s_leave_history').innerHTML = js_s;
-    document.getElementById('sv_leave_history').innerHTML = sv;
-    document.getElementById('approver_leave_history').innerHTML = approver;
-
-    if (sl_r1_1_hrs > 0 || sl_r1_1_date != '' || sl_r1_1_time_in != '' || sl_r1_1_time_out != '') {
-        document.getElementById('lbl_sl_r1_1_hrs_leave_history').innerHTML = `<i class="fas fa-check-square mr-2"></i>Undertime (No. of Hours) `;
-        document.getElementById('sl_r1_1_hrs_leave_history').innerHTML = sl_r1_1_hrs;
-        document.getElementById('sl_r1_1_date_leave_history').innerHTML = sl_r1_1_date;
-        document.getElementById('sl_r1_1_time_in_leave_history').innerHTML = sl_r1_1_time_in;
-        document.getElementById('sl_r1_1_time_out_leave_history').innerHTML = sl_r1_1_time_out;
-    } else {
-        document.getElementById('lbl_sl_r1_1_hrs_leave_history').innerHTML = `<i class="fas fa-square mr-2"></i>Undertime (No. of Hours) `;
-        document.getElementById('sl_r1_1_hrs_leave_history').innerHTML = '';
-        document.getElementById('sl_r1_1_date_leave_history').innerHTML = '';
-        document.getElementById('sl_r1_1_time_in_leave_history').innerHTML = '';
-        document.getElementById('sl_r1_1_time_out_leave_history').innerHTML = '';
-    }
-    
-    if (sl_rc_1_days > 0 || sl_rc_2_from != '' || sl_rc_2_to != '') {
-        document.getElementById('lbl_sl_rc_1_days_leave_history').innerHTML = `<i class="fas fa-check-square mr-2"></i>Unfit for `;
-        document.getElementById('sl_rc_1_days_leave_history').innerHTML = sl_rc_1_days;
-        document.getElementById('sl_rc_2_from_leave_history').innerHTML = sl_rc_2_from;
-        document.getElementById('sl_rc_2_to_leave_history').innerHTML = sl_rc_2_to;
-    } else {
-        document.getElementById('lbl_sl_rc_1_days_leave_history').innerHTML = `<i class="fas fa-square mr-2"></i>Unfit for `;
-        document.getElementById('sl_rc_1_days_leave_history').innerHTML = '';
-        document.getElementById('sl_rc_2_from_leave_history').innerHTML = '';
-        document.getElementById('sl_rc_2_to_leave_history').innerHTML = '';
-    }
-
-    if (sl_r1_2_days > 0) {
-        document.getElementById('lbl_sl_r1_2_days_leave_history').innerHTML = `<i class="fas fa-check-square mr-2"></i>Sick Leave For : `;
-        document.getElementById('sl_r1_2_days_leave_history').innerHTML = sl_r1_2_days;
-    } else {
-        document.getElementById('lbl_sl_r1_2_days_leave_history').innerHTML = `<i class="fas fa-square mr-2"></i>Sick Leave For : `;
-        document.getElementById('sl_r1_2_days_leave_history').innerHTML = '';
-    }
-
-    if (sl_rc_3_oc == 1) {
-        document.getElementById('lbl_sl_rc_3_oc_leave_history').innerHTML = `<i class="fas fa-check-square mr-2"></i>For Observation At The Clinic`;
-    } else {
-        document.getElementById('lbl_sl_rc_3_oc_leave_history').innerHTML = `<i class="fas fa-square mr-2"></i>For Observation At The Clinic`;
-    }
-
-    if (sl_r1_3_date != '') {
-        document.getElementById('lbl_sl_r1_3_date_leave_history').innerHTML = `<i class="fas fa-check-square mr-2"></i>Fit To Work Effective `;
-        document.getElementById('sl_r1_3_date_leave_history').innerHTML = sl_r1_3_date;
-    } else {
-        document.getElementById('lbl_sl_r1_3_date_leave_history').innerHTML = `<i class="fas fa-square mr-2"></i>Fit To Work Effective `;
-        document.getElementById('sl_r1_3_date_leave_history').innerHTML = '';
-    }
-
-    if (sl_rc_4_hm == 1) {
-        document.getElementById('lbl_sl_rc_4_hm_leave_history').innerHTML = `<i class="fas fa-check-square mr-2"></i>For Hospital Management`;
-    } else {
-        document.getElementById('lbl_sl_rc_4_hm_leave_history').innerHTML = `<i class="fas fa-square mr-2"></i>For Hospital Management`;
-    }
-
-    if (sl_rc_mgh == 1) {
-        document.getElementById('lbl_sl_rc_mgh_leave_history').innerHTML = `<i class="fas fa-check-square mr-2"></i>May Go Home`;
-    } else {
-        document.getElementById('lbl_sl_rc_mgh_leave_history').innerHTML = `<i class="fas fa-square mr-2"></i>May Go Home`;
-    }
-
-    document.getElementById('sl_r2_leave_history').innerHTML = sl_r2;
-
-    document.getElementById('sl_dr_name_leave_history').innerHTML = sl_dr_name;
-    document.getElementById('sl_dr_date_leave_history').innerHTML = sl_dr_date;
-
-    $.ajax({
-        url:'../process/hr/employees/emp-masterlist_p.php',
-        type:'POST',
-        cache:false,
-        data:{
-            method:'get_employee_data',
-            emp_no:emp_no
-        },
-        success:function(response){
-            try {
-                let response_array = JSON.parse(response);
-                document.getElementById('emp_no_leave_history').innerHTML = response_array.emp_no;
-                document.getElementById('full_name_leave_history').innerHTML = response_array.full_name;
-                document.getElementById('dept_leave_history').innerHTML = response_array.dept;
-                document.getElementById('position_leave_history').innerHTML = response_array.position;
-                document.getElementById('emp_status_leave_history').innerHTML = response_array.emp_status;
-                document.getElementById('date_hired_leave_history').innerHTML = response_array.date_hired;
-                document.getElementById('address_leave_history').value = response_array.address;
-                document.getElementById('contact_no_leave_history').innerHTML = response_array.contact_no;
-            } catch(e) {
-                console.log(response);
-                Swal.fire({
-                  icon: 'error',
-                  title: 'Error !!!',
-                  text: `Error: ${response}`,
-                  showConfirmButton: false,
-                  timer : 1000
-                });
-            }
+        function showLoadError(message) {
+            $('#leaveRecordsBody').html(`<tr><td colspan="11" class="table-state table-state-error">${escapeHtml(message)}</td></tr>`);
+            $('#recordResultCount').text('Records could not be loaded');
         }
-    });
-}
 
-const export_leave_form_history = () => {
-    let date_filed_from = document.getElementById("date_filed_from_search").value;
-    let date_filed_to = document.getElementById("date_filed_to_search").value;
-    let leave_type = document.getElementById("leave_type_search").value;
-    let leave_form_status = document.getElementById("leave_form_status_search").value;
-    if (date_filed_from != '' && date_filed_to != '') {
-        window.open('../process/export/exp_leave_form_history.php?date_filed_from='+date_filed_from+'&date_filed_to='+date_filed_to+'&leave_type='+leave_type+'&leave_form_status='+leave_form_status,'_blank');
-    } else {
-        Swal.fire({
-          icon: 'info',
-          title: 'Please fill out date fields',
-          text: 'Info',
-          showConfirmButton: false,
-          timer : 1000
+        function populateLeaveTypes() {
+            const select = $('#recordLeaveType');
+            const selected = select.val();
+            const values = [...new Set(allRecords.map(row => row.leave_type).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+            select.html('<option value="">All leave types</option>' + values.map(value => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`).join(''));
+            if (values.includes(selected)) select.val(selected);
+        }
+
+        function applyFilters() {
+            const query = $('#recordSearch').val().trim().toLowerCase();
+            const leaveType = $('#recordLeaveType').val();
+            const dateFrom = $('#recordDateFrom').val();
+            const dateTo = $('#recordDateTo').val();
+
+            filteredRecords = allRecords.filter(row => {
+                const searchable = [
+                    row.leave_id, row.name, row.emp_no, row.department, row.section, row.line_no,
+                    row.leave_type, row.leave_reason, row.leave_status, row.current_stage
+                ].join(' ').toLowerCase();
+                if (query && !searchable.includes(query)) return false;
+                if (leaveType && row.leave_type !== leaveType) return false;
+                const filed = row.date_created ? String(row.date_created).substring(0, 10) : '';
+                if (dateFrom && (!filed || filed < dateFrom)) return false;
+                if (dateTo && (!filed || filed > dateTo)) return false;
+                return true;
+            });
+
+            currentPage = 1;
+            renderTable();
+        }
+
+        function renderTable() {
+            const pageSize = Number($('#recordPageSize').val()) || 25;
+            const total = filteredRecords.length;
+            const pageCount = Math.max(1, Math.ceil(total / pageSize));
+            currentPage = Math.min(currentPage, pageCount);
+            const start = (currentPage - 1) * pageSize;
+            const rows = filteredRecords.slice(start, start + pageSize);
+
+            $('#recordResultCount').text(total ? `Showing ${start + 1}–${Math.min(start + pageSize, total)} of ${total} records` : 'No records found');
+
+            if (!rows.length) {
+                $('#leaveRecordsBody').html(`<tr><td colspan="11" class="table-state">No ${activeTab.toLowerCase()} leave records match your filters.</td></tr>`);
+            } else {
+                $('#leaveRecordsBody').html(rows.map((row, index) => `
+                <tr>
+                    <td class="text-muted">${start + index + 1}</td>
+                    <td>${escapeHtml(formatDate(row.date_created))}</td>
+                    <td><span class="record-id">${escapeHtml(row.leave_id || '—')}</span></td>
+                    <td><div class="employee-name">${escapeHtml(row.name || '—')}</div><div class="employee-sub">${escapeHtml(row.emp_no || '')}</div></td>
+                    <td><div>${escapeHtml(row.department || '—')}</div><div class="employee-sub">${escapeHtml(row.section || '')}</div></td>
+                    <td>${escapeHtml(row.line_no)}</td>
+                    <td>${escapeHtml(row.leave_type || '—')}</td>
+                    <td>${escapeHtml(formatDateRange(row))}</td>
+                    <td>${escapeHtml(row.total_days ?? '—')} ${escapeHtml(row.day_unit || '')}</td>
+                    <td>${renderStatus(row.current_stage)}</td>
+                    <td>${renderStatus(row.display_status)}</td>
+                    <td><button type="button" class="btn btn-sm nexus-view-btn" data-record-index="${start + index}"><i class="far fa-eye"></i> View</button></td>
+                </tr>
+            `).join(''));
+            }
+
+            renderPagination(pageCount);
+        }
+
+        function renderPagination(pageCount) {
+            const container = $('#recordPagination');
+            if (pageCount <= 1) {
+                container.empty();
+                return;
+            }
+            let html = `<button type="button" data-page="${currentPage - 1}" ${currentPage === 1 ? 'disabled' : ''} aria-label="Previous page"><i class="fas fa-chevron-left"></i></button>`;
+            const pages = new Set([1, pageCount, currentPage - 1, currentPage, currentPage + 1]);
+            let previous = 0;
+            [...pages].filter(page => page >= 1 && page <= pageCount).sort((a, b) => a - b).forEach(page => {
+                if (previous && page - previous > 1) html += '<span class="pagination-ellipsis">…</span>';
+                html += `<button type="button" data-page="${page}" class="${page === currentPage ? 'active' : ''}">${page}</button>`;
+                previous = page;
+            });
+            html += `<button type="button" data-page="${currentPage + 1}" ${currentPage === pageCount ? 'disabled' : ''} aria-label="Next page"><i class="fas fa-chevron-right"></i></button>`;
+            container.html(html);
+        }
+
+        function detailSection(title, icon, fields) {
+            return `<section class="record-detail-section"><h6><i class="${icon}"></i>${escapeHtml(title)}</h6><div class="record-detail-grid">${fields.map(field => `
+            <div class="record-detail-field ${field.full ? 'field-full' : ''}">
+                <span>${escapeHtml(field.label)}</span><strong>${escapeHtml(field.value || '—')}</strong>
+            </div>`).join('')}</div></section>`;
+        }
+
+        function showDetails(row) {
+            $('#detailLeaveId').text(row.leave_id || '');
+            $('#leaveRecordDetailsTitle').text(row.name ? row.name + ' — Leave Application' : 'Leave Application');
+
+            const employee = detailSection('Employee Information', 'fas fa-user', [{
+                    label: 'Employee Name',
+                    value: row.name
+                }, {
+                    label: 'Employee No.',
+                    value: row.emp_no
+                },
+                {
+                    label: 'Department',
+                    value: row.department
+                }, {
+                    label: 'Section',
+                    value: row.section
+                },
+                {
+                    label: 'Position',
+                    value: row.position
+                }, {
+                    label: 'Employment Status',
+                    value: row.employment_status
+                },
+                {
+                    label: 'Contact No.',
+                    value: row.contact_no
+                }, {
+                    label: 'Address',
+                    value: row.address,
+                    full: true
+                }
+            ]);
+            const leave = detailSection('Leave Information', 'fas fa-file-alt', [{
+                    label: 'Leave Type',
+                    value: row.leave_type
+                }, {
+                    label: 'Date Filed',
+                    value: formatDate(row.date_created)
+                },
+                {
+                    label: 'Leave From',
+                    value: formatDate(row.date_from)
+                }, {
+                    label: 'Leave To',
+                    value: formatDate(row.date_to)
+                },
+                {
+                    label: 'Total Days',
+                    value: `${row.total_days ?? '—'} ${row.day_unit || ''}`
+                },
+                {
+                    label: 'Classification',
+                    value: row.classification
+                }, {
+                    label: 'Reason',
+                    value: row.leave_reason,
+                    full: true
+                },
+                {
+                    label: 'Illness',
+                    value: row.leave_illness,
+                    full: true
+                }, {
+                    label: 'Written Reason',
+                    value: row.reason_written,
+                    full: true
+                },
+                {
+                    label: 'Information Received',
+                    value: row.information_received
+                }, {
+                    label: 'Information Received By',
+                    value: row.information_received_by
+                }
+            ]);
+            const workflow = detailSection('Approval Workflow', 'fas fa-route', [{
+                    label: 'FTW Status',
+                    value: row.ftw_by_status
+                }, {
+                    label: 'FTW Evaluated By',
+                    value: row.ftw_by_name
+                },
+                {
+                    label: 'FTW Remarks',
+                    value: row.ftw_by_remarks,
+                    full: true
+                }, {
+                    label: 'FTW Date',
+                    value: row.ftw_by_date ? formatDate(row.ftw_by_date) : ''
+                },
+                {
+                    label: 'Checker',
+                    value: row.checked_by_name
+                }, {
+                    label: 'Checker Status',
+                    value: row.checked_by_status
+                },
+                {
+                    label: 'Checker Remarks',
+                    value: row.checked_by_remarks,
+                    full: true
+                }, {
+                    label: 'Checker Date',
+                    value: row.checked_by_date ? formatDate(row.checked_by_date) : ''
+                },
+                {
+                    label: 'Reviewer',
+                    value: row.reviewed_by_name
+                }, {
+                    label: 'Reviewer Status',
+                    value: row.reviewed_by_status
+                },
+                {
+                    label: 'Reviewer Remarks',
+                    value: row.reviewed_by_remarks,
+                    full: true
+                }, {
+                    label: 'Reviewer Date',
+                    value: row.reviewed_by_date ? formatDate(row.reviewed_by_date) : ''
+                },
+                {
+                    label: 'Approver',
+                    value: row.approved_by_name
+                }, {
+                    label: 'Approver Status',
+                    value: row.approved_by_status
+                },
+                {
+                    label: 'Approver Remarks',
+                    value: row.approved_by_remarks,
+                    full: true
+                }, {
+                    label: 'Approver Date',
+                    value: row.approved_by_date ? formatDate(row.approved_by_date) : ''
+                },
+                {
+                    label: 'Overall Status',
+                    value: row.display_status
+                }, {
+                    label: 'Current Stage',
+                    value: row.current_stage
+                }
+            ]);
+            const extra = detailSection('Additional Information', 'fas fa-paperclip', [{
+                    label: 'Remarks',
+                    value: row.remarks,
+                    full: true
+                },
+                {
+                    label: 'Attachment',
+                    value: row.attachment_file_path ? 'Attachment available' : 'No attachment'
+                },
+                {
+                    label: 'File Type',
+                    value: row.file_type
+                }
+            ]);
+
+            $('#leaveRecordDetailsContent').html(employee + leave + workflow + extra);
+            $('#leaveRecordDetailsModal').modal('show');
+        }
+
+        $(document).on('click', '[data-record-tab]', function() {
+            const nextTab = $(this).data('record-tab');
+            if (activeTab === nextTab) return;
+            activeTab = nextTab;
+            $('[data-record-tab]').removeClass('active').attr('aria-selected', 'false');
+            $(this).addClass('active').attr('aria-selected', 'true');
+            loadRecords();
         });
-    }
-}
+
+        $('#refreshLeaveRecords').on('click', loadRecords);
+        $('#applyRecordFilters').on('click', applyFilters);
+        $('#recordSearch').on('input', function() {
+            $('#clearRecordSearch').prop('hidden', !this.value);
+            applyFilters();
+        });
+        $('#clearRecordSearch').on('click', function() {
+            $('#recordSearch').val('').trigger('input').focus();
+        });
+        $('#recordLeaveType').on('change', applyFilters);
+        $('#recordPageSize').on('change', renderTable);
+        $('#resetRecordFilters').on('click', function() {
+            $('#recordSearch').val('');
+            $('#clearRecordSearch').prop('hidden', true);
+            $('#recordLeaveType').val('');
+            $('#recordDateFrom, #recordDateTo').val('');
+            applyFilters();
+        });
+        $('#recordPagination').on('click', 'button[data-page]', function() {
+            if (this.disabled) return;
+            currentPage = Number($(this).data('page'));
+            renderTable();
+        });
+        $('#leaveRecordsBody').on('click', '[data-record-index]', function() {
+            const index = Number($(this).data('record-index'));
+            const row = filteredRecords[index];
+            if (row) showDetails(row);
+        });
+
+        $(loadRecords);
+    })(jQuery);
 </script>

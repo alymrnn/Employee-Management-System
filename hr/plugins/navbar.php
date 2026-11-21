@@ -1,4 +1,4 @@
-<?php 
+<?php
 //SESSION
 include '../process/login4.php';
 
@@ -6,9 +6,10 @@ if (!isset($_SESSION['emp_no_hr'])) {
   header('location:/emp_mgt/hr');
   exit;
 }
-?>  
+?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -25,11 +26,21 @@ if (!isset($_SESSION['emp_no_hr'])) {
   <link rel="stylesheet" href="../dist/css/adminlte.min.css">
   <!-- overlayScrollbars -->
   <link rel="stylesheet" href="../plugins/overlayScrollbars/css/OverlayScrollbars.min.css">
-    <!-- Sweet Alert -->
+  <!-- Sweet Alert -->
   <link rel="stylesheet" href="../plugins/sweetalert2/dist/sweetalert2.min.css">
   <!-- Apexcharts -->
   <link rel="stylesheet" href="../plugins/apexcharts/3.22.2/css/apexcharts.min.css">
   <style>
+    @font-face {
+      font-family: "Mona Sans";
+      src: url("../dist/font/monasans/MonaSans-Regular.ttf") format("truetype");
+    }
+
+    body {
+      font-family: "Mona Sans", sans-serif;
+    }
+
+
     .loader {
       border: 16px solid #f3f3f3;
       border-radius: 50%;
@@ -44,6 +55,7 @@ if (!isset($_SESSION['emp_no_hr'])) {
       position: relative;
       overflow: hidden;
     }
+
     .btn-file input[type=file] {
       position: absolute;
       top: 0;
@@ -54,32 +66,47 @@ if (!isset($_SESSION['emp_no_hr'])) {
       text-align: right;
       filter: alpha(opacity=0);
       opacity: 0;
-      outline: none;   
+      outline: none;
       cursor: inherit;
       display: block;
     }
 
     @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(1080deg); }
-    } 
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(1080deg);
+      }
+    }
 
     /* Employee Picture Style */
     .update_employee_picture_img_tag {
-      width: 100px; /* Fixed width */
-      height: 100px; /* Fixed height */
-      object-fit: contain; /* Ensure the whole image is visible */
-      object-position: center; /* Center the image within the container */
+      width: 100px;
+      /* Fixed width */
+      height: 100px;
+      /* Fixed height */
+      object-fit: contain;
+      /* Ensure the whole image is visible */
+      object-position: center;
+      /* Center the image within the container */
     }
+
     .attendances_employee_picture_img_tag {
-      width: 75px; /* Fixed width */
-      height: 75px; /* Fixed height */
-      object-fit: contain; /* Ensure the whole image is visible */
-      object-position: center; /* Center the image within the container */
+      width: 75px;
+      /* Fixed width */
+      height: 75px;
+      /* Fixed height */
+      object-fit: contain;
+      /* Ensure the whole image is visible */
+      object-position: center;
+      /* Center the image within the container */
     }
 
     .bg-lightpink {
-      background-color: pink; /* You can also use hex code #FFB6C1 */
+      background-color: pink;
+      /* You can also use hex code #FFB6C1 */
     }
 
     /* Hover effect for rows that have the bg-lightpink class */
@@ -89,40 +116,45 @@ if (!isset($_SESSION['emp_no_hr'])) {
     }
 
     .my-custom-error-swal {
-      width: 1000px; /* Adjust width as needed */
-      max-width: 90%; /* Ensures responsiveness */
+      width: 1000px;
+      /* Adjust width as needed */
+      max-width: 90%;
+      /* Ensures responsiveness */
     }
+
     .my-custom-error-swal .swal2-html-container {
-      max-height: 400px; /* Control height to manage overflow */
-      overflow-y: auto; /* Enable vertical scrolling if needed */
+      max-height: 400px;
+      /* Control height to manage overflow */
+      overflow-y: auto;
+      /* Enable vertical scrolling if needed */
     }
   </style>
 </head>
+
 <body class="hold-transition sidebar-mini layout-fixed">
-<div class="wrapper">
+  <div class="wrapper">
 
-  <!-- Preloader -->
-  <div class="preloader flex-column justify-content-center align-items-center">
-    <img class="animation__shake" src="../dist/img/logo.webp" alt="logo" height="60" width="60">
-  </div>
+    <!-- Preloader -->
+    <div class="preloader flex-column justify-content-center align-items-center">
+      <img class="animation__shake" src="../dist/img/logo.webp" alt="logo" height="60" width="60">
+    </div>
 
-  <!-- Navbar -->
-  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
-    <!-- Left navbar links -->
-    <ul class="navbar-nav">
-      <li class="nav-item">
-        <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
-      </li>
-    </ul>
+    <!-- Navbar -->
+    <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+      <!-- Left navbar links -->
+      <ul class="navbar-nav">
+        <li class="nav-item">
+          <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+        </li>
+      </ul>
 
-    <!-- Right navbar links -->
-    <ul class="navbar-nav ml-auto">
-      <li class="nav-item">
-        <a class="nav-link" data-widget="fullscreen" href="#" role="button">
-          <i class="fas fa-expand-arrows-alt"></i>
-        </a>
-      </li>
-    </ul>
-  </nav>
-  <!-- /.navbar -->
-
+      <!-- Right navbar links -->
+      <ul class="navbar-nav ml-auto">
+        <li class="nav-item">
+          <a class="nav-link" data-widget="fullscreen" href="#" role="button">
+            <i class="fas fa-expand-arrows-alt"></i>
+          </a>
+        </li>
+      </ul>
+    </nav>
+    <!-- /.navbar -->

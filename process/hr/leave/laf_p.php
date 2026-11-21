@@ -1,219 +1,195 @@
-<?php 
-session_set_cookie_params(0, "/emp_mgt");
-session_name("emp_mgt");
+<?php
+session_name('emp_mgt');
 session_start();
 
+header('Content-Type: application/json; charset=utf-8');
 include '../../conn.php';
 
-$method = $_POST['method'];
-
-// Leave Application Form
-
-if ($method == 'get_pending_leave_forms') {
-	$leave_date = $_POST['leave_date'];
-	if (!empty($leave_date)) {
-		$leave_date = date_create($leave_date);
-		$leave_date = date_format($leave_date,"Y-m-d");
-	}
-
-	$leave_type = trim($_POST['leave_type']);
-
-	$row_class_arr = array('modal-trigger', 'modal-trigger bg-orange', 'modal-trigger bg-warning');
-	$row_class = $row_class_arr[0];
-	$c = 0;
-
-	$sql = "SELECT 
-				leave_form_id, emp_no, date_filed, address, contact_no, 
-				leave_type, leave_date_from, leave_date_to, total_leave_days, 
-				irt_phone_call, irt_letter, irb, reason, issued_by, 
-				js_s, sv, approver, leave_form_status, 
-				sl_r1_1_hrs, sl_r1_1_date, sl_r1_1_time_in, sl_r1_1_time_out, sl_r1_2_days, sl_r1_3_date, 
-				sl_rc_1_days, sl_rc_2_from, sl_rc_2_to, sl_rc_3_oc, 
-				sl_rc_4_hm, sl_rc_mgh, sl_r2, sl_dr_name, sl_dr_date 
-			FROM t_leave_form 
-			WHERE (leave_form_status = 'clinic' OR leave_form_status = 'pending') AND 
-			? BETWEEN leave_date_from AND leave_date_to";
-	$params = [];
-	$params[] = $leave_date;
-
-	if (!empty($leave_type)) {
-		$sql .= " AND leave_type = ?";
-		$params[] = $leave_type;
-	}
-
-	$sql .= " ORDER BY id DESC";
-
-	$stmt = $conn->prepare($sql);
-	$stmt->execute($params);
-
-	while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-		$c++;
-
-		if ($row['leave_form_status'] == 'clinic') {
-			$row_class = $row_class_arr[1];
-		} else if ($row['leave_form_status'] == 'pending') {
-			$row_class = $row_class_arr[2];
-		} else {
-			$row_class = $row_class_arr[0];
-		}
-
-		echo '<tr style="cursor:pointer;" class="'.$row_class.'" data-toggle="modal" data-target="#leave_form_pending" 
-					onclick="get_pending_leave_forms_details(&quot;'.
-					$row['leave_form_id'].'~!~'.
-					$row['emp_no'].'~!~'.
-					$row['date_filed'].'~!~'.
-					$row['address'].'~!~'.
-					$row['contact_no'].'~!~'.
-					$row['leave_type'].'~!~'.
-					$row['leave_date_from'].'~!~'.
-					$row['leave_date_to'].'~!~'.
-					$row['total_leave_days'].'~!~'.
-					$row['irt_phone_call'].'~!~'.
-					$row['irt_letter'].'~!~'.
-					$row['irb'].'~!~'.
-					$row['reason'].'~!~'.
-					$row['issued_by'].'~!~'.
-					$row['js_s'].'~!~'.
-					$row['sv'].'~!~'.
-					$row['approver'].'~!~'.
-					$row['sl_r1_1_hrs'].'~!~'.
-					$row['sl_r1_1_date'].'~!~'.
-					$row['sl_r1_1_time_in'].'~!~'.
-					$row['sl_r1_1_time_out'].'~!~'.
-					$row['sl_r1_2_days'].'~!~'.
-					$row['sl_r1_3_date'].'~!~'.
-					$row['sl_rc_1_days'].'~!~'.
-					$row['sl_rc_2_from'].'~!~'.
-					$row['sl_rc_2_to'].'~!~'.
-					$row['sl_rc_3_oc'].'~!~'.
-					$row['sl_rc_4_hm'].'~!~'.
-					$row['sl_rc_mgh'].'~!~'.
-					$row['sl_r2'].'~!~'.
-					$row['sl_dr_name'].'~!~'.
-					$row['sl_dr_date'].'&quot;)">';
-
-		echo '<td>'.$c.'</td>';
-		echo '<td>'.$row['date_filed'].'</td>';
-		echo '<td>'.$row['leave_form_id'].'</td>';
-		echo '<td>'.$row['leave_type'].'</td>';
-		echo '<td>'.$row['leave_date_from'].'</td>';
-		echo '<td>'.$row['leave_date_to'].'</td>';
-		
-		echo '</tr>';
-	}
+function leave_records_response($success, $data = [], $message = '', $counts = [])
+{
+	echo json_encode([
+		'success' => $success,
+		'message' => $message,
+		'data' => $data,
+		'counts' => $counts
+	], JSON_INVALID_UTF8_SUBSTITUTE);
+	exit;
 }
 
-if ($method == 'get_leave_forms_history') {
-	$date_filed_from = $_POST['date_filed_from'];
-	if (!empty($date_filed_from)) {
-		$date_filed_from = date_create($date_filed_from);
-		$date_filed_from = date_format($date_filed_from,"Y-m-d");
-	}
-	$date_filed_to = $_POST['date_filed_to'];
-	if (!empty($date_filed_to)) {
-		$date_filed_to = date_create($date_filed_to);
-		$date_filed_to = date_format($date_filed_to,"Y-m-d");
-	}
-	$leave_type = trim($_POST['leave_type']);
-	$leave_form_status = trim($_POST['leave_form_status']);
-
-	$row_class_arr = array('modal-trigger', 'modal-trigger bg-success', 'modal-trigger bg-danger');
-	$row_class = $row_class_arr[0];
-	$c = 0;
-
-	$sql = "SELECT 
-				leave_form_id, emp_no, date_filed, address, contact_no, 
-				leave_type, leave_date_from, leave_date_to, total_leave_days, 
-				irt_phone_call, irt_letter, irb, reason, 
-				issued_by, js_s, sv, approver, leave_form_status, 
-				sl_r1_1_hrs, sl_r1_1_date, sl_r1_1_time_in, sl_r1_1_time_out, sl_r1_2_days, sl_r1_3_date, 
-				sl_rc_1_days, sl_rc_2_from, sl_rc_2_to, sl_rc_3_oc, 
-				sl_rc_4_hm, sl_rc_mgh, sl_r2, sl_dr_name, sl_dr_date 
-			FROM t_leave_form_history 
-			WHERE (date_filed >= ? AND date_filed <= ?)";
-	$params = [];
-	$params[] = $date_filed_from;
-	$params[] = $date_filed_to;
-
-	if (!empty($leave_type)) {
-		$sql = $sql . " AND leave_type = ?";
-		$params[] = $leave_type;
-		if (empty($leave_form_status)) {
-			$sql = $sql . " AND (leave_form_status = 'approved' OR leave_form_status = 'disapproved')";
-		} else if ($leave_form_status == 'approved') {
-			$sql = $sql . " AND leave_form_status = 'approved'";
-		} else if ($leave_form_status == 'disapproved') {
-			$sql = $sql . " AND leave_form_status = 'disapproved'";
-		}
-	} else if (empty($leave_form_status)) {
-		$sql = $sql . " AND (leave_form_status = 'approved' OR leave_form_status = 'disapproved')";
-	} else if ($leave_form_status == 'approved') {
-		$sql = $sql . " AND leave_form_status = 'approved'";
-	} else if ($leave_form_status == 'disapproved') {
-		$sql = $sql . " AND leave_form_status = 'disapproved'";
-	}
-
-	$sql = $sql . " ORDER BY id DESC";
-
-	$stmt = $conn->prepare($sql);
-	$stmt->execute($params);
-
-	while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-		$c++;
-
-		if ($row['leave_form_status'] == 'approved') {
-			$row_class = $row_class_arr[1];
-		} else if ($row['leave_form_status'] == 'disapproved') {
-			$row_class = $row_class_arr[2];
-		} else {
-			$row_class = $row_class_arr[0];
-		}
-
-		echo '<tr style="cursor:pointer;" class="'.$row_class.'" data-toggle="modal" data-target="#leave_form_history" 
-					onclick="get_leave_forms_history_details(&quot;'.
-					$row['leave_form_id'].'~!~'.
-					$row['emp_no'].'~!~'.
-					$row['date_filed'].'~!~'.
-					$row['address'].'~!~'.
-					$row['contact_no'].'~!~'.
-					$row['leave_type'].'~!~'.
-					$row['leave_date_from'].'~!~'.
-					$row['leave_date_to'].'~!~'.
-					$row['total_leave_days'].'~!~'.
-					$row['irt_phone_call'].'~!~'.
-					$row['irt_letter'].'~!~'.
-					$row['irb'].'~!~'.
-					$row['reason'].'~!~'.
-					$row['issued_by'].'~!~'.
-					$row['js_s'].'~!~'.
-					$row['sv'].'~!~'.
-					$row['approver'].'~!~'.
-					$row['sl_r1_1_hrs'].'~!~'.
-					$row['sl_r1_1_date'].'~!~'.
-					$row['sl_r1_1_time_in'].'~!~'.
-					$row['sl_r1_1_time_out'].'~!~'.
-					$row['sl_r1_2_days'].'~!~'.
-					$row['sl_r1_3_date'].'~!~'.
-					$row['sl_rc_1_days'].'~!~'.
-					$row['sl_rc_2_from'].'~!~'.
-					$row['sl_rc_2_to'].'~!~'.
-					$row['sl_rc_3_oc'].'~!~'.
-					$row['sl_rc_4_hm'].'~!~'.
-					$row['sl_rc_mgh'].'~!~'.
-					$row['sl_r2'].'~!~'.
-					$row['sl_dr_name'].'~!~'.
-					$row['sl_dr_date'].'~!~'.
-					$row['leave_form_status'].'&quot;)">';
-
-		echo '<td>'.$c.'</td>';
-		echo '<td>'.$row['date_filed'].'</td>';
-		echo '<td>'.$row['leave_form_id'].'</td>';
-		echo '<td>'.$row['leave_type'].'</td>';
-		echo '<td>'.$row['leave_date_from'].'</td>';
-		echo '<td>'.$row['leave_date_to'].'</td>';
-		
-		echo '</tr>';
-	}
+$method = $_POST['method'] ?? '';
+if ($method !== 'get_leave_records') {
+	http_response_code(400);
+	leave_records_response(false, [], 'Invalid request method.');
 }
 
-$conn = NULL;
+try {
+	if (!isset($conn) || !($conn instanceof PDO)) {
+		throw new RuntimeException('The database connection is not available or is not a PDO connection.');
+	}
+
+	$category = strtoupper(trim($_POST['category'] ?? 'PENDING'));
+	if (!in_array($category, ['PENDING', 'HISTORY'], true)) $category = 'PENDING';
+
+	/*
+     * One approval-status row is selected per leave_id. If the table contains
+     * multiple snapshots, the latest updated/created row is used.
+     */
+	$sql = "
+		WITH LeaveRecords AS (
+			SELECT
+				f.id,
+				f.leave_id,
+				f.name,
+				f.emp_no,
+				e.line_no,
+				f.department,
+				f.section,
+				f.position,
+				f.employment_status,
+				f.address,
+				f.contact_no,
+				f.leave_type,
+				f.leave_reason,
+				f.leave_illness,
+				f.reason_written,
+				f.information_received,
+				f.information_received_by,
+				f.date_from,
+				f.date_to,
+				f.total_days,
+				f.day_unit,
+				f.classification,
+				f.date_created,
+				f.attachment_file_path,
+				f.is_checked,
+				f.is_reviewed,
+				f.is_approved,
+				f.is_ftw,
+				f.remarks,
+				f.leave_status,
+				f.file_type,
+				s.ftw_by_emp_no,
+				s.ftw_by_name,
+				s.ftw_by_status,
+				s.ftw_by_remarks,
+				s.ftw_by_date,
+				s.checked_by_emp_no,
+				s.checked_by_name,
+				s.checked_by_status,
+				s.checked_by_remarks,
+				s.checked_by_date,
+				s.reviewed_by_emp_no,
+				s.reviewed_by_name,
+				s.reviewed_by_status,
+				s.reviewed_by_remarks,
+				s.reviewed_by_date,
+				s.approved_by_emp_no,
+				s.approved_by_name,
+				s.approved_by_status,
+				s.approved_by_remarks,
+				s.approved_by_date,
+				CASE
+					WHEN LOWER(LTRIM(RTRIM(ISNULL(f.leave_status, '')))) IN ('not fit to work', 'not fit') THEN 'Not Fit to Work'
+					WHEN LOWER(LTRIM(RTRIM(ISNULL(f.leave_status, '')))) IN ('rejected', 'disapproved') THEN 'Rejected'
+					WHEN LOWER(LTRIM(RTRIM(ISNULL(s.ftw_by_status, '')))) IN ('not fit to work', 'not fit') THEN 'Not Fit to Work'
+					WHEN LOWER(LTRIM(RTRIM(ISNULL(s.checked_by_status, '')))) IN ('rejected', 'disapproved') THEN 'Rejected'
+					WHEN LOWER(LTRIM(RTRIM(ISNULL(s.reviewed_by_status, '')))) IN ('rejected', 'disapproved') THEN 'Rejected'
+					WHEN LOWER(LTRIM(RTRIM(ISNULL(s.approved_by_status, '')))) IN ('rejected', 'disapproved') THEN 'Rejected'
+					WHEN LOWER(LTRIM(RTRIM(ISNULL(f.leave_status, '')))) = 'approved'
+						OR LOWER(LTRIM(RTRIM(ISNULL(s.approved_by_status, '')))) = 'approved' THEN 'Approved'
+					ELSE 'Pending'
+				END AS record_category_status,
+				CASE
+					WHEN LOWER(LTRIM(RTRIM(ISNULL(f.leave_status, '')))) IN ('not fit to work', 'not fit')
+						OR LOWER(LTRIM(RTRIM(ISNULL(s.ftw_by_status, '')))) IN ('not fit to work', 'not fit') THEN 'Not Fit to Work'
+					WHEN LOWER(LTRIM(RTRIM(ISNULL(f.leave_status, '')))) IN ('rejected', 'disapproved')
+						OR LOWER(LTRIM(RTRIM(ISNULL(s.checked_by_status, '')))) IN ('rejected', 'disapproved')
+						OR LOWER(LTRIM(RTRIM(ISNULL(s.reviewed_by_status, '')))) IN ('rejected', 'disapproved')
+						OR LOWER(LTRIM(RTRIM(ISNULL(s.approved_by_status, '')))) IN ('rejected', 'disapproved') THEN 'Rejected'
+					WHEN LOWER(LTRIM(RTRIM(ISNULL(f.leave_status, '')))) = 'approved'
+						OR LOWER(LTRIM(RTRIM(ISNULL(s.approved_by_status, '')))) = 'approved' THEN 'Approved'
+					WHEN ISNULL(f.is_ftw, 0) = 1
+						AND LOWER(LTRIM(RTRIM(ISNULL(s.ftw_by_status, '')))) NOT IN ('fit to work', 'fit') THEN 'Awaiting FTW'
+					WHEN LOWER(LTRIM(RTRIM(ISNULL(s.checked_by_status, '')))) <> 'approved' THEN 'Awaiting Checker'
+					WHEN LOWER(LTRIM(RTRIM(ISNULL(s.reviewed_by_status, '')))) <> 'approved' THEN 'Awaiting Reviewer'
+					WHEN LOWER(LTRIM(RTRIM(ISNULL(s.approved_by_status, '')))) <> 'approved' THEN 'Awaiting Approver'
+					ELSE 'Awaiting Approval'
+				END AS current_stage,
+				CASE
+					WHEN LOWER(LTRIM(RTRIM(ISNULL(f.leave_status, '')))) IN ('not fit to work', 'not fit')
+						OR LOWER(LTRIM(RTRIM(ISNULL(s.ftw_by_status, '')))) IN ('not fit to work', 'not fit') THEN 'Not Fit to Work'
+					WHEN LOWER(LTRIM(RTRIM(ISNULL(f.leave_status, '')))) IN ('rejected', 'disapproved')
+						OR LOWER(LTRIM(RTRIM(ISNULL(s.checked_by_status, '')))) IN ('rejected', 'disapproved')
+						OR LOWER(LTRIM(RTRIM(ISNULL(s.reviewed_by_status, '')))) IN ('rejected', 'disapproved')
+						OR LOWER(LTRIM(RTRIM(ISNULL(s.approved_by_status, '')))) IN ('rejected', 'disapproved') THEN 'Rejected'
+					WHEN LOWER(LTRIM(RTRIM(ISNULL(f.leave_status, '')))) = 'approved'
+						OR LOWER(LTRIM(RTRIM(ISNULL(s.approved_by_status, '')))) = 'approved' THEN 'Approved'
+					ELSE 'Pending'
+				END AS display_status
+			FROM [emp_mgt_db].[dbo].[falpwebv3_leave_form] f
+			OUTER APPLY (
+				SELECT TOP (1) a.*
+				FROM [emp_mgt_db].[dbo].[falpwebv3_leave_approval_status] a
+				WHERE a.leave_id = f.leave_id
+				ORDER BY a.date_updated DESC, a.date_created DESC, a.id DESC
+			) s
+			LEFT JOIN [emp_mgt_db].[dbo].[m_employees] e
+				ON e.emp_no = f.emp_no
+		)
+		SELECT *
+		FROM LeaveRecords
+		WHERE
+			(
+				(:category_pending = 'PENDING' AND record_category_status = 'Pending')
+				OR
+				(:category_history = 'HISTORY' AND record_category_status IN ('Approved', 'Rejected', 'Not Fit to Work'))
+			)
+		ORDER BY date_created DESC, id DESC
+	";
+
+	$stmt = $conn->prepare($sql);
+	$stmt->bindValue(':category_pending', $category, PDO::PARAM_STR);
+	$stmt->bindValue(':category_history', $category, PDO::PARAM_STR);
+	$stmt->execute();
+	$records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+	$countsSql = "
+        WITH StatusRows AS (
+            SELECT
+                f.leave_id,
+                CASE
+                    WHEN LOWER(LTRIM(RTRIM(ISNULL(f.leave_status, '')))) IN ('not fit to work', 'not fit')
+                         OR LOWER(LTRIM(RTRIM(ISNULL(s.ftw_by_status, '')))) IN ('not fit to work', 'not fit') THEN 'Not Fit to Work'
+                    WHEN LOWER(LTRIM(RTRIM(ISNULL(f.leave_status, '')))) IN ('rejected', 'disapproved')
+                         OR LOWER(LTRIM(RTRIM(ISNULL(s.checked_by_status, '')))) IN ('rejected', 'disapproved')
+                         OR LOWER(LTRIM(RTRIM(ISNULL(s.reviewed_by_status, '')))) IN ('rejected', 'disapproved')
+                         OR LOWER(LTRIM(RTRIM(ISNULL(s.approved_by_status, '')))) IN ('rejected', 'disapproved') THEN 'Rejected'
+                    WHEN LOWER(LTRIM(RTRIM(ISNULL(f.leave_status, '')))) = 'approved'
+                         OR LOWER(LTRIM(RTRIM(ISNULL(s.approved_by_status, '')))) = 'approved' THEN 'Approved'
+                    ELSE 'Pending'
+                END AS record_status
+            FROM [emp_mgt_db].[dbo].[falpwebv3_leave_form] f
+            OUTER APPLY (
+                SELECT TOP (1) a.*
+                FROM [emp_mgt_db].[dbo].[falpwebv3_leave_approval_status] a
+                WHERE a.leave_id = f.leave_id
+                ORDER BY a.date_updated DESC, a.date_created DESC, a.id DESC
+            ) s
+        )
+        SELECT
+            SUM(CASE WHEN record_status = 'Pending' THEN 1 ELSE 0 END) AS pending_count,
+            SUM(CASE WHEN record_status IN ('Approved', 'Rejected', 'Not Fit to Work') THEN 1 ELSE 0 END) AS history_count
+        FROM StatusRows
+    ";
+	$countStmt = $conn->query($countsSql);
+	$countRow = $countStmt ? $countStmt->fetch(PDO::FETCH_ASSOC) : [];
+
+	leave_records_response(true, $records, '', [
+		'pending' => (int)($countRow['pending_count'] ?? 0),
+		'history' => (int)($countRow['history_count'] ?? 0)
+	]);
+} catch (Throwable $e) {
+	error_log('Leave records error: ' . $e->getMessage());
+	http_response_code(500);
+	leave_records_response(false, [], 'A server error occurred while loading leave records. Check the server error log for details.');
+}
