@@ -37,14 +37,14 @@
         display: block;
         margin-bottom: 5px;
         color: #656d76;
-        font-size: 11px;
+        font-size: 12px;
         font-weight: 600;
     }
 
     .leave-records-filters .form-control {
         min-width: 145px;
         height: 36px;
-        font-size: 11px;
+        font-size: 12px;
     }
 
     .leave-records-filters .btn {
@@ -62,7 +62,7 @@
         border-radius: 6px;
         background: transparent;
         color: #1f883d;
-        font-size: 11px;
+        font-size: 12px;
         font-weight: 600;
         line-height: 1.2;
         white-space: nowrap;
@@ -252,7 +252,7 @@
 
     .leave-records-search>i {
         position: absolute;
-        top: 11px;
+        top: 12px;
         left: 12px;
         color: #8c959f;
         font-size: 12px;
@@ -333,7 +333,7 @@
         gap: 12px;
         padding: 0 26px 12px;
         color: #656d76;
-        font-size: 11px;
+        font-size: 12px;
     }
 
     .records-meta-note {
@@ -528,7 +528,7 @@
     .employee-sub {
         margin-top: 3px;
         color: #484c50;
-        font-size: 11px;
+        font-size: 12px;
     }
 
     .record-status {
@@ -630,7 +630,7 @@
         gap: 12px;
         padding: 14px 26px 18px;
         color: #656d76;
-        font-size: 11px;
+        font-size: 12px;
     }
 
     .records-page-size {
@@ -644,7 +644,7 @@
         height: 28px;
         border: 1px solid #d0d7de;
         border-radius: 5px;
-        font-size: 11px;
+        font-size: 12px;
     }
 
     .records-pagination {
@@ -661,7 +661,7 @@
         border-radius: 5px;
         background: #fff;
         color: #57606a;
-        font-size: 11px;
+        font-size: 12px;
     }
 
     .records-pagination button:hover:not(:disabled),
@@ -724,7 +724,7 @@
     }
 
     #leaveRecordDetailsModal #detailLeaveId {
-        font-size: 11px;
+        font-size: 12px;
     }
 
     #leaveRecordDetailsModal .modal-body {
@@ -952,7 +952,7 @@
     .record-attachment-name {
         min-width: 0;
         color: #57606a;
-        font-size: 11px;
+        font-size: 12px;
         overflow-wrap: anywhere;
     }
 
@@ -965,7 +965,7 @@
         border-radius: 6px;
         background: #fff;
         color: #0969da;
-        font-size: 11px;
+        font-size: 12px;
         font-weight: 600;
         text-decoration: none !important;
     }
@@ -1057,7 +1057,7 @@
         }
 
         .workflow-stage {
-            padding: 11px;
+            padding: 12px;
         }
 
         .workflow-stage-heading {
@@ -1078,5 +1078,107 @@
     #recordSearch::-webkit-search-cancel-button {
         -webkit-appearance: none;
         appearance: none;
+    }
+
+    .leave-records-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+
+    .nexus-dashboard-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 38px;
+        padding: 8px 14px;
+        border: 1px solid #d0d7de;
+        border-radius: 8px;
+        background: #fff;
+        color: #0969da;
+        font-family: inherit;
+        font-size: 12px;
+        font-weight: 600;
+        transition: all .2s ease-in-out;
+    }
+
+    .nexus-dashboard-btn:hover {
+        background: #f6f8fa;
+        border-color: #0969da;
+        color: #0550ae;
+    }
+
+    .nexus-dashboard-btn i {
+        font-size: 14px;
+    }
+
+
+    /* =========================================
+   LEAVE DASHBOARD - FULLSCREEN MODAL
+========================================= */
+
+    #leaveDashboardModal {
+        padding: 0 !important;
+        overflow: hidden !important;
+    }
+
+    #leaveDashboardModal .modal-dialog {
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        width: 95vw !important;
+        max-width: 95vw !important;
+        height: 95vh !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        transform: translate(-50%, -50%) !important;
+    }
+
+    #leaveDashboardModal .leave-dashboard-content {
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        height: 95vh !important;
+        min-height: 95vh !important;
+        border: 0 !important;
+        border-radius: 8px !important;
+        overflow: hidden !important;
+    }
+
+    /* Dashboard Content */
+    #leaveDashboardModal .modal-body {
+        flex: 1 1 auto !important;
+        width: 100% !important;
+        min-height: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+    }
+
+    #leaveDashboardModal .leave-dashboard-frame {
+        display: block;
+        width: 100%;
+        height: 100%;
+        min-height: 100%;
+        border: 0;
+        background: #fafbfc;
+    }
+
+    /* Fixed Footer */
+    #leaveDashboardModal .leave-dashboard-footer {
+        flex: 0 0 auto;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        min-height: 60px;
+        padding: 10px 24px;
+        background: #f6f8fa;
+        border-top: 1px solid #d0d7de;
+    }
+
+    /* Prevent Background Scrolling */
+    body.modal-open {
+        overflow: hidden !important;
     }
 </style>

@@ -12,9 +12,20 @@
             <h2>Leave Application Records</h2>
             <p>View applications across FTW evaluation, checking, reviewing, and approval.</p>
           </div>
-          <button type="button" class="btn nexus-refresh-btn" id="refreshLeaveRecords">
-            <i class="fas fa-sync-alt"></i><span>Refresh</span>
-          </button>
+
+          <div class="leave-records-actions">
+            <button type="button" class="btn nexus-dashboard-btn"
+              data-toggle="modal"
+              data-target="#leaveDashboardModal">
+              <i class="fas fa-chart-pie"></i>
+              <span>Leave Dashboard</span>
+            </button>
+
+            <button type="button" class="btn nexus-refresh-btn" id="refreshLeaveRecords">
+              <i class="fas fa-sync-alt"></i>
+              <span>Refresh</span>
+            </button>
+          </div>
         </div>
 
         <div class="leave-records-tabs" role="tablist" aria-label="Leave record categories">
@@ -183,6 +194,31 @@
       <div class="modal-body" id="leaveRecordDetailsContent"></div>
       <div class="modal-footer">
         <button type="button" class="btn nexus-clear-btn" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="leaveDashboardModal" tabindex="-1" role="dialog"
+  aria-labelledby="leaveDashboardModalLabel" aria-hidden="true">
+
+  <div class="modal-dialog leave-dashboard-dialog" role="document">
+    <div class="modal-content leave-dashboard-content">
+
+      <!-- Dashboard Content -->
+      <div class="modal-body mb-3">
+        <iframe
+          src="leave_dashboard.php"
+          title="Leave Management Dashboard"
+          class="leave-dashboard-frame">
+        </iframe>
+      </div>
+
+      <!-- Fixed Footer -->
+      <div class="modal-footer leave-dashboard-footer">
+        <button type="button" class="btn nexus-clear-btn text-danger" data-dismiss="modal">
+          <i class="fas fa-times mr-1"></i> Close
+        </button>
       </div>
     </div>
   </div>
