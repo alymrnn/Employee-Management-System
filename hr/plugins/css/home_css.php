@@ -141,14 +141,6 @@
         padding: 22px 0 18px;
     }
 
-    .leave-records-card {
-        background: #fff;
-        border: 1px solid #d0d7de;
-        border-radius: 10px;
-        overflow: hidden;
-        box-shadow: 0 1px 2px rgba(31, 35, 40, 0.04);
-    }
-
     .leave-records-heading {
         display: flex;
         align-items: center;
